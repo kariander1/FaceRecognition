@@ -59,7 +59,7 @@ images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-PATH = './cifar_net.pth'
+PATH = 'cifar_net_09202021.pth'
 
 net = Net()
 net.load_state_dict(torch.load(PATH))
