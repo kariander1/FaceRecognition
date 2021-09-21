@@ -10,11 +10,8 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 from prettytable import PrettyTable
+from torch.utils.tensorboard import SummaryWriter
 
-# fields = ['Batch Size', 'Filter Size', 'Epochs', 'Learning Rate', 'Num of FC', 'Depth per Pooling', 'Pooling Stride',
-#          'Optimizer', 'Loss Function', 'Parameters', 'Train Accuracy', 'Test Accuracy']
-fields = {}
-csv_name = r'accuracy_chart.csv'
 
 
 # Define NET class with RELU activation
@@ -26,16 +23,17 @@ class Net(nn.Module):
         # TODO: Check how to define/random weights if needed
         self.conv1 = nn.Conv2d(3, 6, filter_size)
         self.conv2 = nn.Conv2d(6, 10, filter_size)
-        self.pool = nn.MaxPool2d(pooling_size, pooling_size)
+        self.pool1 = nn.MaxPool2d(pooling_size, pooling_size)
+        self.pool2 = nn.MaxPool2d(pooling_size, pooling_size)
         self.conv3 = nn.Conv2d(10, 14, filter_size)
-        self.fc1 = nn.Linear(14 * 2 * 2, 128)
+        self.fc1 = nn.Linear(14 * 4 * 4, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
+        x = (F.relu(self.conv1(x)))
+        x = self.pool1(F.relu(self.conv2(x)))
+        x = self.pool2(F.relu(self.conv3(x)))
         x = torch.flatten(x, 1)  # flatten all dimensions except batch
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -52,7 +50,7 @@ def im_show(img):
 
 
 # Trains the given train loader and saves the trained net in the path given
-def train_net(train_loader, save_path, passes=2, status_every_batch=2000):
+def train_net(train_loader, optimizer, save_path, passes=2, status_every_batch=2000):
     train_losses = []
     for epoch in range(passes):  # loop over the dataset multiple times
 
@@ -147,16 +145,17 @@ def count_parameters(model):
 
 
 # Define batch size for stochastic gradient descent
-# TODO:Hyper-parameter TBD
+fields = {}
+csv_name = r'accuracy_chart.csv'
 batch_size = 4
-filter_size = 3
+filter_size = 5
 epochs = 2
-learning_rate = 0.001
-weight_decay = 0.01
+learning_rate = 0.0007
+weight_decay = 0
 pooling_size = 2
 momentum = 0.9
 num_of_fc = 2
-test_name = 'Deeper Network'
+test_name = 'Different pools'
 
 fields['Batch Size'] = batch_size
 fields['Filter Size'] = filter_size
@@ -205,6 +204,9 @@ print(device)
 
 # Create new Net
 net = Net(filter_size, pooling_size)
+writer = SummaryWriter('logs/')
+writer.add_graph(net, images)
+writer.close()
 net.to(device)
 # TODO : Test different losses
 criterion = nn.CrossEntropyLoss()
@@ -222,7 +224,7 @@ fields['Train Accuracy'] = 'Not Trained'
 if not os.path.isfile(net_path):
     # If the net doesn't exist
     print("Network wasn't found, training a new network:")
-    train_accuracy = 1 - train_net(train_loader=train_loader, save_path=net_path, passes=epochs)
+    train_accuracy = 1 - train_net(train_loader=train_loader, optimizer=optimizer, save_path=net_path, passes=epochs)
     fields['Train Accuracy'] = train_accuracy
 
 # Take the first batch

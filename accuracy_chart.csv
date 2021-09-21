@@ -1,12 +1,20 @@
-Batch Size,Filter Size,Epochs,Learning Rate,Pooling Size,Number of FC,Comment,Loss Function,Optimizer,Train Accuracy,Test Accuracy,Parameters
-4,5,2,0.001,2,2,,CrossEntropyLoss,Adam,0,55.14,43000
-4,5,2,0.001,2,2,,CrossEntropyLoss,Adam,0,55.14,43000
-4,5,2,0.001,2,2,,CrossEntropyLoss,Adam,0,55.14,43000
-4,5,2,0.001,2,2,,CrossEntropyLoss,Adam,0.184723139,53.99,43000
-4,5,2,0.001,2,2,,CrossEntropyLoss,Adam,Not Trained,53.99,43000
-4,5,2,0.001,2,2,,CrossEntropyLoss,Adam,Not Trained,53.99,43000
-4,5,2,0.001,2,2,fc128,CrossEntropyLoss,Adam,Not Trained,53.99,43000
-4,7,2,0.001,2,2,fc128,CrossEntropyLoss,Adam,-0.7921587228775024,48.2,24392
-4,3,2,0.001,2,2,fc128,CrossEntropyLoss,Adam,0.27191489934921265,57.33,55832
-4,3,2,0.001,2,2,Deeper Network,CrossEntropyLoss,Adam,-0.3452634811401367,50.61,18194
-4,3,2,0.001,0,2,2,Deeper Network,CrossEntropyLoss,Adam,0.359253466129303,50.34,18194
+Batch Size,Filter Size,Epochs,Learning Rate,Weight Decay,Pooling Size,Number of FC,Comment,Loss Function,Optimizer,Train Accuracy,Test Accuracy,Parameters,
+4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0,55.14,43000,
+4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0,55.14,43000,
+4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0,55.14,43000,
+4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0.184723139,53.99,43000,
+4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,Not Trained,53.99,43000,
+4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,Not Trained,53.99,43000,
+4,5,2,0.001,0,2,2,fc128,CrossEntropyLoss,Adam,Not Trained,53.99,43000,
+4,7,2,0.001,0,2,2,fc128,CrossEntropyLoss,Adam,-0.792158723,48.2,24392,
+4,3,2,0.001,0,2,2,fc128,CrossEntropyLoss,Adam,0.271914899,57.33,55832,
+4,3,2,0.001,0,2,2,Deeper Network,CrossEntropyLoss,Adam,-0.345263481,50.61,18194,
+4,3,2,0.001,0,2,2,Deeper Network,CrossEntropyLoss,Adam,0.359253466,50.34,18194,
+4,3,2,0.001,0,2,2,Deeper Network,CrossEntropyLoss,Adam,-0.476853848,50.18,18194,18194
+4,5,2,0.0007,0,2,2,Deeper Network,CrossEntropyLoss,Adam,0.192301631,54.71,193714,
+4,5,2,0.0007,0,2,2,Deeper Network With 3 layers,CrossEntropyLoss,Adam,-0.0639427900314331,53.61,43186
+4,5,2,0.0007,0,2,2,Deeper Network With 3 layers,CrossEntropyLoss,Adam,-0.00782477855682373,53.57,43186
+4,5,2,0.0007,0,2,2,Deeper Network With 3 layers,CrossEntropyLoss,Adam,Not Trained,53.57,43186
+4,5,2,0.0007,0,2,2,Deeper Network With 3 layers OPT,CrossEntropyLoss,Adam,0.390974760055542,51.05,43186
+4,5,2,0.0007,0,2,2,Deeper Network With 3 layers OPT,CrossEntropyLoss,Adam,Not Trained,51.05,43186
+4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,0.531885176897049,52.43,43186
