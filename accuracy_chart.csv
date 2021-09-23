@@ -18,3 +18,7 @@ Batch Size,Filter Size,Epochs,Learning Rate,Weight Decay,Pooling Size,Number of 
 4,5,2,0.0007,0,2,2,Deeper Network With 3 layers OPT,CrossEntropyLoss,Adam,0.390974760055542,51.05,43186
 4,5,2,0.0007,0,2,2,Deeper Network With 3 layers OPT,CrossEntropyLoss,Adam,Not Trained,51.05,43186
 4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,0.531885176897049,52.43,43186
+4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,-0.08554637432098389,55.43,43186
+4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,Not Trained,55.43,43186
+4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,-0.2524613674283027,56.17,43186
+4,5,1,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,-0.4628069813624025,48.0,43186

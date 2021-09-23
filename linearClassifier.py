@@ -10,7 +10,7 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 from prettytable import PrettyTable
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 
 
 
@@ -41,6 +41,39 @@ class Net(nn.Module):
         return x
 
 
+def show_loss_graph(train_loss_vector, test_accuracy_vector, iterations_vector):
+    # plotting the line 1 points
+    plt.plot(iterations_vector, train_loss_vector, label="Training Loss")
+
+    # naming the x axis
+
+    plt.xlabel('Iteration [#]')
+    # naming the y axis
+    plt.ylabel('Loss')
+    # giving a title to my graph
+    plt.title('Train Loss Graph')
+
+    # show a legend on the plot
+    plt.legend()
+
+    # function to show the plot
+    plt.show()
+
+    # plotting the line 2 points
+    plt.plot(iterations_vector, test_accuracy_vector, label="Test Accuracy")
+
+    # naming the x axis
+    plt.xlabel('Iteration [#]')
+    # naming the y axis
+    plt.ylabel('Accuracy [%]')
+    # giving a title to my graph
+    plt.title('Test Accuracy Graph')
+
+    # show a legend on the plot
+    plt.legend()
+
+    # function to show the plot
+    plt.show()
 # function to show an image
 def im_show(img):
     img = img / 2 + 0.5  # unnormalize
@@ -50,8 +83,11 @@ def im_show(img):
 
 
 # Trains the given train loader and saves the trained net in the path given
-def train_net(train_loader, optimizer, save_path, passes=2, status_every_batch=2000):
+def train_net(net, train_loader, test_loader, optimizer, save_path, passes=2, status_every_batch=2000):
     train_losses = []
+    iterations = []
+    test_accuracies = []
+    iteration = 1
     for epoch in range(passes):  # loop over the dataset multiple times
 
         running_loss = 0.0
@@ -70,11 +106,20 @@ def train_net(train_loader, optimizer, save_path, passes=2, status_every_batch=2
 
             # print statistics
             running_loss += loss.item()
-            train_losses.append(loss.item())
+
             if i % status_every_batch == status_every_batch - 1:  # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / status_every_batch))
+                train_losses.append(running_loss / status_every_batch)
+
                 running_loss = 0.0
+                # Run test data and calculate loss
+                test_acc = calc_accuracy(test_loader, net)
+                test_accuracies.append(test_acc)
+                iterations.append(iteration)
+
+            iteration = iteration + 1
+
     print('Finished Training')
     torch.save(net.state_dict(), save_path)
     # Plot the testing loss graph
@@ -85,6 +130,7 @@ def train_net(train_loader, optimizer, save_path, passes=2, status_every_batch=2
     # plt.ylabel("Loss")
     # plt.legend()
     # plt.show()
+    show_loss_graph(train_losses, test_accuracies, iterations)
     return train_losses[-1]
 
 
@@ -204,9 +250,9 @@ print(device)
 
 # Create new Net
 net = Net(filter_size, pooling_size)
-writer = SummaryWriter('logs/')
-writer.add_graph(net, images)
-writer.close()
+#writer = SummaryWriter('logs/')
+#writer.add_graph(net, images)
+#writer.close()
 net.to(device)
 # TODO : Test different losses
 criterion = nn.CrossEntropyLoss()
@@ -224,7 +270,8 @@ fields['Train Accuracy'] = 'Not Trained'
 if not os.path.isfile(net_path):
     # If the net doesn't exist
     print("Network wasn't found, training a new network:")
-    train_accuracy = 1 - train_net(train_loader=train_loader, optimizer=optimizer, save_path=net_path, passes=epochs)
+    train_accuracy = 1 - train_net(net=net, train_loader=train_loader, test_loader=test_loader, optimizer=optimizer,
+                                   save_path=net_path, passes=epochs)
     fields['Train Accuracy'] = train_accuracy
 
 # Take the first batch
