@@ -202,6 +202,7 @@ def count_parameters(model):
 
 
 # Define batch size for stochastic gradient descent
+# *************************************************
 fields = {}
 csv_name = r'accuracy_chart.csv'
 batch_size = 4
@@ -209,10 +210,11 @@ filter_size = 5
 epochs = 5
 learning_rate = 0.001
 weight_decay = 0
-pooling_size = 2
-momentum = 0.98
+pooling_size = 1
+momentum = 0.9
 num_of_fc = 3
-test_name = 'test1'
+test_name = 'Pooling_DOWN'
+# ******************************************
 
 fields['Batch Size'] = batch_size
 fields['Filter Size'] = filter_size
