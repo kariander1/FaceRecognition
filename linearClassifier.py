@@ -39,11 +39,12 @@ class Net(nn.Module):
         return x
 
 
-def show_loss_graph(train_loss_vector, test_loss_vector,test_accuracy_vector, iterations_vector, figure=None):
+def show_loss_graph(train_loss_vector, test_loss_vector, test_accuracy_vector, iterations_vector, figure=None):
     if figure is None:
         figure = plt.figure()
         plot = figure.add_subplot(1, 1, 1)
         sec_plot = plot.twinx()
+
     else:
         plot = figure.axes[0]
         sec_plot = figure.axes[1]
@@ -62,11 +63,13 @@ def show_loss_graph(train_loss_vector, test_loss_vector,test_accuracy_vector, it
     # giving a title to my graph
     plot.set_title('Train Loss Graph')
 
+    plt.close(figure)
     # function to show the plot
     figure.show()
 
     # show a legend on the plot
     figure.legend()
+
     return figure
 
 
@@ -93,7 +96,7 @@ def calc_test_loss(net, test_loader, criterion):
 
 
 # Trains the given train loader and saves the trained net in the path given
-def train_net(net, train_loader, test_loader, optimizer,criterion, save_path, passes=2, status_every_batch=2000):
+def train_net(net, train_loader, test_loader, optimizer, criterion, save_path, passes=2, status_every_batch=2000):
     train_losses = []
     iterations = []
     test_accuracies = []
@@ -163,9 +166,9 @@ def calc_accuracy(test_loader, net, calc_per_class=False):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     accuracy = 100.0 * correct / total
-    #print('Accuracy of the network on the 10000 test images: %d %%' % (
-    #    accuracy))
-
+    print('Accuracy of the network on the 10000 test images: %d %%' % (
+        accuracy))
+    test_accuracy = accuracy
     if calc_per_class:
         # prepare to count predictions for each class
         correct_pred = {classname: 0 for classname in classes}
@@ -188,7 +191,7 @@ def calc_accuracy(test_loader, net, calc_per_class=False):
             accuracy = 100 * float(correct_count) / total_pred[classname]
             print("Accuracy for class {:5s} is: {:.1f} %".format(classname,
                                                                  accuracy))
-    return accuracy
+    return test_accuracy
 
 
 # Method for calculating how many parameters were used in the network
@@ -206,14 +209,14 @@ def count_parameters(model):
 
 
 # Define batch size for stochastic gradient descent
-for i in range(1, 2):
+for num_of_filters_2 in range(1, 48):
     fields = {}
     csv_name = r'accuracy_chart.csv'
     batch_size = 8
     filter_size = 5
     epochs = 10
     num_of_filters = 29
-    num_of_filters_2 = 16
+    #num_of_filters_2 = 10
     learning_rate = 0.001
     weight_decay = 0
     pooling_size = 2
@@ -257,7 +260,7 @@ for i in range(1, 2):
     images, labels = data_iter.next()
 
     # show images
-    #im_show(torchvision.utils.make_grid(images))
+    # im_show(torchvision.utils.make_grid(images))
     # print labels
     print(' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 
@@ -282,7 +285,7 @@ for i in range(1, 2):
     optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
     optimizer_str = type(optimizer).__name__
     fields["Optimizer"] = optimizer_str
-    net_path = 'cifar_net_' + str(batch_size) + '_' + str(filter_size) + '_' + str(epochs) + '_' + str(
+    net_path = 'nets/cifar_net_' + str(batch_size) + '_' + str(filter_size) + '_' + str(epochs) + '_' + str(
         learning_rate) + '_' + str(pooling_size) + '_' + str(
         num_of_fc) + '_' + optimizer_str + '_' + str(num_of_filters) + '_' + str(
         num_of_filters_2) + '_' + test_name + '_' + str(
@@ -302,7 +305,7 @@ for i in range(1, 2):
     images, labels = data_iter.next()
 
     # print images and labels given to the batch
-    #im_show(torchvision.utils.make_grid(images))
+    # im_show(torchvision.utils.make_grid(images))
 
     # print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
@@ -318,13 +321,14 @@ for i in range(1, 2):
     #                              for j in range(4)))
 
     # Calculate accuracy on test images
-    test_accuracy = calc_accuracy(test_loader, net,calc_per_class= True)
+    test_accuracy = calc_accuracy(test_loader, net, calc_per_class=True)
     fields["Test Accuracy"] = test_accuracy
     # Count how many parameters we used foreach layer
     param_count = count_parameters(net)
 
     fields["Parameters"] = param_count
     fields['Comment'] = test_name
+    fields['Net Name'] = net_path
     with open(csv_name, 'a', newline='') as outfile:
         writer = csv.writer(outfile)
         writer.writerow(fields.values())
