@@ -21,29 +21,27 @@ class Net(nn.Module):
         # TODO: Define layers for better accuracy (depth)
         # TODO: Define filter size
         # TODO: Check how to define/random weights if needed
-        self.conv1 = nn.Conv2d(3, 6, filter_size)
-        self.conv2 = nn.Conv2d(6, 10, filter_size)
-        self.pool1 = nn.MaxPool2d(pooling_size, pooling_size)
-        self.pool2 = nn.MaxPool2d(pooling_size, pooling_size)
-        self.conv3 = nn.Conv2d(10, 14, filter_size)
-        self.fc1 = nn.Linear(14 * 4 * 4, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 10)
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = (F.relu(self.conv1(x)))
-        x = self.pool1(F.relu(self.conv2(x)))
-        x = self.pool2(F.relu(self.conv3(x)))
-        x = torch.flatten(x, 1)  # flatten all dimensions except batch
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = torch.flatten(x, 1) # flatten all dimensions except batch
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
 
-def show_loss_graph(train_loss_vector, test_accuracy_vector, iterations_vector):
+def show_loss_graph(train_loss_vector, test_accuracy_vector, test_losses, iterations_vector):
     # plotting the line 1 points
     plt.plot(iterations_vector, train_loss_vector, label="Training Loss")
+    plt.plot(iterations_vector, test_losses, label="Testing Loss")
 
     # naming the x axis
 
@@ -59,21 +57,21 @@ def show_loss_graph(train_loss_vector, test_accuracy_vector, iterations_vector):
     # function to show the plot
     plt.show()
 
-    # plotting the line 2 points
-    plt.plot(iterations_vector, test_accuracy_vector, label="Test Accuracy")
-
-    # naming the x axis
-    plt.xlabel('Iteration [#]')
-    # naming the y axis
-    plt.ylabel('Accuracy [%]')
-    # giving a title to my graph
-    plt.title('Test Accuracy Graph')
-
-    # show a legend on the plot
-    plt.legend()
-
-    # function to show the plot
-    plt.show()
+    # # plotting the line 2 points
+    # plt.plot(iterations_vector, test_accuracy_vector, label="Test Accuracy")
+    #
+    # # naming the x axis
+    # plt.xlabel('Iteration [#]')
+    # # naming the y axis
+    # plt.ylabel('Accuracy [%]')
+    # # giving a title to my graph
+    # plt.title('Test Accuracy Graph')
+    #
+    # # show a legend on the plot
+    # plt.legend()
+    #
+    # # function to show the plot
+    # plt.show()
 # function to show an image
 def im_show(img):
     img = img / 2 + 0.5  # unnormalize
@@ -83,10 +81,11 @@ def im_show(img):
 
 
 # Trains the given train loader and saves the trained net in the path given
-def train_net(net, train_loader, test_loader, optimizer, save_path, passes=2, status_every_batch=2000):
+def train_net(net, train_loader, test_loader, optimizer, save_path, passes=2, status_every_batch=4000):
     train_losses = []
     iterations = []
     test_accuracies = []
+    test_losses = []
     iteration = 1
     for epoch in range(passes):  # loop over the dataset multiple times
 
@@ -107,16 +106,28 @@ def train_net(net, train_loader, test_loader, optimizer, save_path, passes=2, st
             # print statistics
             running_loss += loss.item()
 
-            if i % status_every_batch == status_every_batch - 1:  # print every 2000 mini-batches
+            if (i % status_every_batch) == (status_every_batch - 1):  # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / status_every_batch))
                 train_losses.append(running_loss / status_every_batch)
 
                 running_loss = 0.0
                 # Run test data and calculate loss
-                test_acc = calc_accuracy(test_loader, net)
-                test_accuracies.append(test_acc)
+                # test_acc = calc_accuracy(test_loader, net)
+                # test_accuracies.append(test_acc)
                 iterations.append(iteration)
+
+                running_test_loss = 0
+                num_of_test_images = 0
+                for test_data in test_loader:
+                    num_of_test_images += 1
+                    test_images, test_labels = test_data
+                    # calculate outputs by running images through the network
+                    test_outputs = net(test_images)
+                    test_loss = criterion(test_outputs, test_labels)
+                    running_test_loss += test_loss.item()
+
+                test_losses.append(running_test_loss / num_of_test_images)
 
             iteration = iteration + 1
 
@@ -130,7 +141,7 @@ def train_net(net, train_loader, test_loader, optimizer, save_path, passes=2, st
     # plt.ylabel("Loss")
     # plt.legend()
     # plt.show()
-    show_loss_graph(train_losses, test_accuracies, iterations)
+    show_loss_graph(train_losses, test_accuracies, test_losses, iterations)
     return train_losses[-1]
 
 
@@ -195,13 +206,13 @@ fields = {}
 csv_name = r'accuracy_chart.csv'
 batch_size = 4
 filter_size = 5
-epochs = 2
-learning_rate = 0.0007
+epochs = 5
+learning_rate = 0.001
 weight_decay = 0
 pooling_size = 2
-momentum = 0.9
-num_of_fc = 2
-test_name = 'Different pools'
+momentum = 0.98
+num_of_fc = 3
+test_name = 'test1'
 
 fields['Batch Size'] = batch_size
 fields['Filter Size'] = filter_size
@@ -260,6 +271,7 @@ criterion_str = type(criterion).__name__
 fields["Loss Function"] = criterion_str
 # TODO : Change optimizer (maybe to ADAM)
 optimizer = optim.Adam(net.parameters(), lr=learning_rate)
+#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 optimizer_str = type(optimizer).__name__
 fields["Optimizer"] = optimizer_str
 net_path = 'cifar_net_' + str(batch_size) + '_' + str(filter_size) + '_' + str(epochs) + '_' + str(learning_rate) + '_' \
