@@ -28,7 +28,7 @@ class Net(nn.Module):
         self.pool = nn.MaxPool2d(pooling_size, pooling_size)
         self.conv2 = nn.Conv2d(num_of_filters, num_of_filters_2, filter_size, padding='same')
         self.conv2_bn = nn.BatchNorm2d(num_of_filters_2)
-        self.conv3 = nn.Conv2d(num_of_filters, num_of_filters_3, filter_size)
+        self.conv3 = nn.Conv2d(num_of_filters_2, num_of_filters_3, filter_size)
         self.conv3_bn = nn.BatchNorm2d(num_of_filters_3)
         self.fc1 = nn.Linear(num_of_filters_3 * 2 * 2, 10)
         # self.fc2 = nn.Linear(120, 10)
@@ -227,11 +227,11 @@ for i in range(1, 2):
     batch_size = 8
     filter_size = 5
     epochs = 11
-    num_of_filters = 48
-    num_of_filters_2 = 48
-    num_of_filters_3 = 48
+    num_of_filters = 32
+    num_of_filters_2 = 1024
+    num_of_filters_3 = 32
     learning_rate = 0.001
-    weight_decay = 0.001
+    weight_decay = 0
     pooling_size = 2
     momentum = 0.9
     num_of_fc = 2
