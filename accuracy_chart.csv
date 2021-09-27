@@ -1,24 +1,195 @@
-Batch Size,Filter Size,Epochs,Learning Rate,Weight Decay,Pooling Size,Number of FC,Comment,Loss Function,Optimizer,Train Accuracy,Test Accuracy,Parameters,
-4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0,55.14,43000,
-4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0,55.14,43000,
-4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0,55.14,43000,
-4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,0.184723139,53.99,43000,
-4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,Not Trained,53.99,43000,
-4,5,2,0.001,0,2,2,,CrossEntropyLoss,Adam,Not Trained,53.99,43000,
-4,5,2,0.001,0,2,2,fc128,CrossEntropyLoss,Adam,Not Trained,53.99,43000,
-4,7,2,0.001,0,2,2,fc128,CrossEntropyLoss,Adam,-0.792158723,48.2,24392,
-4,3,2,0.001,0,2,2,fc128,CrossEntropyLoss,Adam,0.271914899,57.33,55832,
-4,3,2,0.001,0,2,2,Deeper Network,CrossEntropyLoss,Adam,-0.345263481,50.61,18194,
-4,3,2,0.001,0,2,2,Deeper Network,CrossEntropyLoss,Adam,0.359253466,50.34,18194,
-4,3,2,0.001,0,2,2,Deeper Network,CrossEntropyLoss,Adam,-0.476853848,50.18,18194,18194
-4,5,2,0.0007,0,2,2,Deeper Network,CrossEntropyLoss,Adam,0.192301631,54.71,193714,
-4,5,2,0.0007,0,2,2,Deeper Network With 3 layers,CrossEntropyLoss,Adam,-0.0639427900314331,53.61,43186
-4,5,2,0.0007,0,2,2,Deeper Network With 3 layers,CrossEntropyLoss,Adam,-0.00782477855682373,53.57,43186
-4,5,2,0.0007,0,2,2,Deeper Network With 3 layers,CrossEntropyLoss,Adam,Not Trained,53.57,43186
-4,5,2,0.0007,0,2,2,Deeper Network With 3 layers OPT,CrossEntropyLoss,Adam,0.390974760055542,51.05,43186
-4,5,2,0.0007,0,2,2,Deeper Network With 3 layers OPT,CrossEntropyLoss,Adam,Not Trained,51.05,43186
-4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,0.531885176897049,52.43,43186
-4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,-0.08554637432098389,55.43,43186
-4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,Not Trained,55.43,43186
-4,5,2,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,-0.2524613674283027,56.17,43186
-4,5,1,0.0007,0,2,2,Different pools,CrossEntropyLoss,Adam,-0.4628069813624025,48.0,43186
+Batch Size,Filter Size,Filters count 1,Filters count 2,Filters count 3,Epochs,Learning Rate,Weight Decay,Pooling Size,Number of FC,Loss Function,Optimizer,Train Accuracy,Test Max Accuracy,Test Accuracy,Parameters,Comment,Net Name
+4,5,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,0,,55.14,43000,,
+4,5,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,0,,55.14,43000,,
+4,5,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,0,,55.14,43000,,
+4,5,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,0.184723139,,53.99,43000,,
+4,5,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,Not Trained,,53.99,43000,,
+4,5,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,Not Trained,,53.99,43000,,
+4,5,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,Not Trained,,53.99,43000,fc128,
+4,7,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,-0.792158723,,48.2,24392,fc128,
+4,3,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,0.271914899,,57.33,55832,fc128,
+4,3,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,-0.345263481,,50.61,18194,Deeper Network,
+4,3,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,0.359253466,,50.34,18194,Deeper Network,
+4,3,,,,2,0.001,0,2,2,CrossEntropyLoss,Adam,-0.476853848,,50.18,18194,Deeper Network,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,0.192301631,,54.71,193714,Deeper Network,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,-0.06394279,,53.61,43186,Deeper Network With 3 layers,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,-0.007824779,,53.57,43186,Deeper Network With 3 layers,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,Not Trained,,53.57,43186,Deeper Network With 3 layers,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,0.39097476,,51.05,43186,Deeper Network With 3 layers OPT,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,Not Trained,,51.05,43186,Deeper Network With 3 layers OPT,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,0.531885177,,52.43,43186,Different pools,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,-0.085546374,,55.43,43186,Different pools,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,Not Trained,,55.43,43186,Different pools,
+4,5,,,,2,0.0007,0,2,2,CrossEntropyLoss,Adam,-0.252461367,,56.17,43186,Different pools,
+4,5,,,,1,0.0007,0,2,2,CrossEntropyLoss,Adam,-0.462806981,,48,43186,Different pools,
+8,5,29,16,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.703761803,,,72954,,
+8,5,29,16,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,,72954,,
+8,5,29,1,,10,0.001,0,2,2,CrossEntropyLoss,SGD,1.503599812,,,17064,D29 filters,
+8,5,29,2,,10,0.001,0,2,2,CrossEntropyLoss,SGD,1.276039754,,,20790,D29 filters,
+8,5,29,3,,10,0.001,0,2,2,CrossEntropyLoss,SGD,1.157181809,,,24516,D29 filters,
+8,5,29,4,,10,0.001,0,2,2,CrossEntropyLoss,SGD,1.061426413,,,28242,D29 filters,
+8,5,29,5,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.989082107,,,31968,D29 filters,
+8,5,29,6,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.931396683,,,35694,D29 filters,
+8,5,29,7,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.90529349,,,39420,D29 filters,
+8,5,29,8,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.839472012,,,43146,D29 filters,
+8,5,29,9,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.836051781,,,46872,D29 filters,
+8,5,29,10,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.833059408,,,50598,D29 filters,
+8,5,29,11,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.817379727,,,54324,D29 filters,
+8,5,29,12,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.744694017,,,58050,D29 filters,
+8,5,29,13,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.75225252,,,61776,D29 filters,
+8,5,29,14,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.756952346,,,65502,D29 filters,
+8,5,29,15,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.705914096,,,69228,D29 filters,
+8,5,29,16,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.711804975,,,72954,D29 filters,
+8,5,29,17,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.693923802,,,76680,D29 filters,
+8,5,29,18,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.694572732,,,80406,D29 filters,
+8,5,29,19,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.657088587,,,84132,D29 filters,
+8,5,29,20,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.633870703,,,87858,D29 filters,
+8,5,29,21,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.63954714,,,91584,D29 filters,
+8,5,29,22,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.641675437,,,95310,D29 filters,
+8,5,29,23,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.642617109,,,99036,D29 filters,
+8,5,29,24,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.63223958,,,102762,D29 filters,
+8,5,29,25,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.625045471,,,106488,D29 filters,
+8,5,29,26,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.627634296,,,110214,D29 filters,
+8,5,29,27,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.611628924,,,113940,D29 filters,
+8,5,29,28,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.603847638,,,117666,D29 filters,
+8,5,29,29,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.592831669,,,121392,D29 filters,
+8,5,29,30,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.583841332,,,125118,D29 filters,
+8,5,29,31,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.563402487,,,128844,D29 filters,
+8,5,29,32,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.559127816,,,132570,D29 filters,
+8,5,29,33,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.556694209,,,136296,D29 filters,
+8,5,29,34,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.555831875,,,140022,D29 filters,
+8,5,29,10,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,,50598,D29 filters,cifar_net_8_5_10_0.001_2_2_SGD_29_10_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,1,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,42.78,17064,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_1_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,2,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,51.48,20790,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_2_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,3,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,57.16,24516,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_3_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,4,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,58.62,28242,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_4_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,5,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,61.97,31968,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_5_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,6,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,63.88,35694,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_6_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,7,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,64.17,39420,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_7_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,8,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,67.02,43146,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_8_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,9,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,67.93,46872,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_9_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,10,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,67.35,50598,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_10_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,11,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,64.72,54324,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_11_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,12,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,68.35,58050,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_12_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,13,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,67.18,61776,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_13_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,14,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,68.58,65502,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_14_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,15,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,68.39,69228,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_15_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,16,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,68.77,72954,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_16_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,17,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,69.04,76680,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_17_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,18,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,69.78,80406,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_18_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.96,84132,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,20,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.59,87858,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_20_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,21,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.98,91584,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_21_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,22,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,69.75,95310,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_22_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,23,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,69.42,99036,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_23_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,24,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,68.26,102762,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_24_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,25,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.29,106488,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_25_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,26,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.51,110214,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_26_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,27,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.64,113940,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_27_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,28,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.49,117666,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_28_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,29,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.46,121392,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_29_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,30,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.72,125118,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_30_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,31,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.13,128844,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_31_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,32,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.82,132570,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_32_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,33,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.59,136296,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_33_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,34,,10,0.001,0,2,2,CrossEntropyLoss,SGD,Not Trained,,70.91,140022,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_34_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,35,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.541115675,,70.97,143748,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_35_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,36,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.532696948,,71.12,147474,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_36_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,37,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.540102483,,71.23,151200,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_37_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,38,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.530110189,,71.39,154926,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_38_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,39,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.513421,,71.49,158652,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_39_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,40,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.524840101,,71,162378,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_40_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,41,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.535918555,,71.92,166104,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_41_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,42,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.535641055,,71.81,169830,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_42_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,43,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.530784168,,72.05,173556,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_43_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,44,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.514997809,,71.06,177282,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_44_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,45,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.496488917,,71.67,181008,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_45_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,46,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.486601436,,71.87,184734,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_46_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,47,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.481121336,,70.66,188460,D29 filters,nets/cifar_net_8_5_10_0.001_2_2_SGD_29_47_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.01,0,2,2,CrossEntropyLoss,SGD,Not Trained,,40.89,84132,D29 filters,nets/cifar_net_8_5_10_0.01_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0099,0,2,2,CrossEntropyLoss,SGD,1.638991866,,39.84,84132,D29 filters,nets/cifar_net_8_5_10_0.0099_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0098,0,2,2,CrossEntropyLoss,SGD,1.665583268,,43.12,84132,D29 filters,nets/cifar_net_8_5_10_0.009800000000000001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0097,0,2,2,CrossEntropyLoss,SGD,1.622443265,,44.62,84132,D29 filters,nets/cifar_net_8_5_10_0.009700000000000002_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0096,0,2,2,CrossEntropyLoss,SGD,1.629354475,,45.65,84132,D29 filters,nets/cifar_net_8_5_10_0.009600000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0095,0,2,2,CrossEntropyLoss,SGD,1.634497743,,45.25,84132,D29 filters,nets/cifar_net_8_5_10_0.009500000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0094,0,2,2,CrossEntropyLoss,SGD,1.638139848,,42.62,84132,D29 filters,nets/cifar_net_8_5_10_0.009400000000000004_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0093,0,2,2,CrossEntropyLoss,SGD,1.579053599,,45.01,84132,D29 filters,nets/cifar_net_8_5_10_0.009300000000000004_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0092,0,2,2,CrossEntropyLoss,SGD,1.526810984,,42.45,84132,D29 filters,nets/cifar_net_8_5_10_0.009200000000000005_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0091,0,2,2,CrossEntropyLoss,SGD,1.550369371,,45.03,84132,D29 filters,nets/cifar_net_8_5_10_0.009100000000000006_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.009,0,2,2,CrossEntropyLoss,SGD,1.524825043,,49.82,84132,D29 filters,nets/cifar_net_8_5_10_0.009000000000000006_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0089,0,2,2,CrossEntropyLoss,SGD,1.541756397,,51.78,84132,D29 filters,nets/cifar_net_8_5_10_0.008900000000000007_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0088,0,2,2,CrossEntropyLoss,SGD,1.518877207,,44.96,84132,D29 filters,nets/cifar_net_8_5_10_0.008800000000000007_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0087,0,2,2,CrossEntropyLoss,SGD,1.468294546,,49.73,84132,D29 filters,nets/cifar_net_8_5_10_0.008700000000000008_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0086,0,2,2,CrossEntropyLoss,SGD,1.505587996,,51.38,84132,D29 filters,nets/cifar_net_8_5_10_0.008600000000000009_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0085,0,2,2,CrossEntropyLoss,SGD,1.492454914,,49.49,84132,D29 filters,nets/cifar_net_8_5_10_0.00850000000000001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0084,0,2,2,CrossEntropyLoss,SGD,1.473866426,,50.35,84132,D29 filters,nets/cifar_net_8_5_10_0.00840000000000001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0083,0,2,2,CrossEntropyLoss,SGD,1.463113429,,53.69,84132,D29 filters,nets/cifar_net_8_5_10_0.00830000000000001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0082,0,2,2,CrossEntropyLoss,SGD,1.465285993,,50.88,84132,D29 filters,nets/cifar_net_8_5_10_0.008200000000000011_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0081,0,2,2,CrossEntropyLoss,SGD,1.439350682,,52.74,84132,D29 filters,nets/cifar_net_8_5_10_0.008100000000000012_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.008,0,2,2,CrossEntropyLoss,SGD,1.401429465,,56.07,84132,D29 filters,nets/cifar_net_8_5_10_0.008000000000000012_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0079,0,2,2,CrossEntropyLoss,SGD,1.382727196,,52.15,84132,D29 filters,nets/cifar_net_8_5_10_0.007900000000000013_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0078,0,2,2,CrossEntropyLoss,SGD,1.38826172,,54.19,84132,D29 filters,nets/cifar_net_8_5_10_0.007800000000000013_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0077,0,2,2,CrossEntropyLoss,SGD,1.355103872,,54.1,84132,D29 filters,nets/cifar_net_8_5_10_0.007700000000000012_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0076,0,2,2,CrossEntropyLoss,SGD,1.368550651,,51.97,84132,D29 filters,nets/cifar_net_8_5_10_0.007600000000000012_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0075,0,2,2,CrossEntropyLoss,SGD,1.359856252,,54.63,84132,D29 filters,nets/cifar_net_8_5_10_0.007500000000000012_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0074,0,2,2,CrossEntropyLoss,SGD,1.32144626,,51.79,84132,D29 filters,nets/cifar_net_8_5_10_0.007400000000000012_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0073,0,2,2,CrossEntropyLoss,SGD,1.297105024,,56.54,84132,D29 filters,nets/cifar_net_8_5_10_0.007300000000000011_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0072,0,2,2,CrossEntropyLoss,SGD,1.314223126,,57.31,84132,D29 filters,nets/cifar_net_8_5_10_0.007200000000000011_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0071,0,2,2,CrossEntropyLoss,SGD,1.276677533,,56.8,84132,D29 filters,nets/cifar_net_8_5_10_0.007100000000000011_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.007,0,2,2,CrossEntropyLoss,SGD,1.259470115,,55.89,84132,D29 filters,nets/cifar_net_8_5_10_0.0070000000000000106_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0069,0,2,2,CrossEntropyLoss,SGD,1.261881975,,54.82,84132,D29 filters,nets/cifar_net_8_5_10_0.00690000000000001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0068,0,2,2,CrossEntropyLoss,SGD,1.228631656,,57.82,84132,D29 filters,nets/cifar_net_8_5_10_0.00680000000000001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0067,0,2,2,CrossEntropyLoss,SGD,1.218240737,,55.71,84132,D29 filters,nets/cifar_net_8_5_10_0.00670000000000001_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0066,0,2,2,CrossEntropyLoss,SGD,1.224100628,,58.71,84132,D29 filters,nets/cifar_net_8_5_10_0.0066000000000000095_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0065,0,2,2,CrossEntropyLoss,SGD,1.205758984,,56.03,84132,D29 filters,nets/cifar_net_8_5_10_0.006500000000000009_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0064,0,2,2,CrossEntropyLoss,SGD,1.164396489,,59.35,84132,D29 filters,nets/cifar_net_8_5_10_0.006400000000000009_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0063,0,2,2,CrossEntropyLoss,SGD,1.142496916,,58.06,84132,D29 filters,nets/cifar_net_8_5_10_0.006300000000000009_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0062,0,2,2,CrossEntropyLoss,SGD,1.108161134,,60.58,84132,D29 filters,nets/cifar_net_8_5_10_0.0062000000000000085_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0061,0,2,2,CrossEntropyLoss,SGD,1.116499296,,59.07,84132,D29 filters,nets/cifar_net_8_5_10_0.006100000000000008_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.006,0,2,2,CrossEntropyLoss,SGD,1.095953591,,59.22,84132,D29 filters,nets/cifar_net_8_5_10_0.006000000000000008_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0059,0,2,2,CrossEntropyLoss,SGD,1.109675677,,61.07,84132,D29 filters,nets/cifar_net_8_5_10_0.005900000000000008_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0058,0,2,2,CrossEntropyLoss,SGD,1.047066091,,60.68,84132,D29 filters,nets/cifar_net_8_5_10_0.005800000000000007_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0057,0,2,2,CrossEntropyLoss,SGD,1.044598451,,59.43,84132,D29 filters,nets/cifar_net_8_5_10_0.005700000000000007_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0056,0,2,2,CrossEntropyLoss,SGD,1.072846898,,59.93,84132,D29 filters,nets/cifar_net_8_5_10_0.005600000000000007_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0055,0,2,2,CrossEntropyLoss,SGD,1.030384303,,62.42,84132,D29 filters,nets/cifar_net_8_5_10_0.005500000000000007_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0054,0,2,2,CrossEntropyLoss,SGD,1.008188284,,61.33,84132,D29 filters,nets/cifar_net_8_5_10_0.005400000000000006_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0053,0,2,2,CrossEntropyLoss,SGD,1.004763112,,63.4,84132,D29 filters,nets/cifar_net_8_5_10_0.005300000000000006_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0052,0,2,2,CrossEntropyLoss,SGD,0.943652267,,62.9,84132,D29 filters,nets/cifar_net_8_5_10_0.005200000000000006_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0051,0,2,2,CrossEntropyLoss,SGD,1.014818063,,60.89,84132,D29 filters,nets/cifar_net_8_5_10_0.005100000000000006_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.005,0,2,2,CrossEntropyLoss,SGD,0.943423573,,62.69,84132,D29 filters,nets/cifar_net_8_5_10_0.005000000000000005_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0049,0,2,2,CrossEntropyLoss,SGD,0.953743166,,63.58,84132,D29 filters,nets/cifar_net_8_5_10_0.004900000000000005_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0048,0,2,2,CrossEntropyLoss,SGD,0.941098807,,64.27,84132,D29 filters,nets/cifar_net_8_5_10_0.004800000000000005_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0047,0,2,2,CrossEntropyLoss,SGD,0.936716429,,59.57,84132,D29 filters,nets/cifar_net_8_5_10_0.0047000000000000045_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0046,0,2,2,CrossEntropyLoss,SGD,0.915937588,,63.37,84132,D29 filters,nets/cifar_net_8_5_10_0.004600000000000004_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0045,0,2,2,CrossEntropyLoss,SGD,0.932048133,,63.19,84132,D29 filters,nets/cifar_net_8_5_10_0.004500000000000004_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0044,0,2,2,CrossEntropyLoss,SGD,0.914676281,,62.31,84132,D29 filters,nets/cifar_net_8_5_10_0.004400000000000004_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0043,0,2,2,CrossEntropyLoss,SGD,0.877751512,,64.2,84132,D29 filters,nets/cifar_net_8_5_10_0.0043000000000000035_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0042,0,2,2,CrossEntropyLoss,SGD,0.858324995,,66.73,84132,D29 filters,nets/cifar_net_8_5_10_0.004200000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0041,0,2,2,CrossEntropyLoss,SGD,0.85397888,,65.55,84132,D29 filters,nets/cifar_net_8_5_10_0.004100000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.004,0,2,2,CrossEntropyLoss,SGD,0.845044216,,64.93,84132,D29 filters,nets/cifar_net_8_5_10_0.004000000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0039,0,2,2,CrossEntropyLoss,SGD,0.825751527,,65.55,84132,D29 filters,nets/cifar_net_8_5_10_0.003900000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0038,0,2,2,CrossEntropyLoss,SGD,0.814868168,,64.45,84132,D29 filters,nets/cifar_net_8_5_10_0.003800000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0037,0,2,2,CrossEntropyLoss,SGD,0.812624048,,65.13,84132,D29 filters,nets/cifar_net_8_5_10_0.003700000000000003_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0036,0,2,2,CrossEntropyLoss,SGD,0.79832432,,61.94,84132,D29 filters,nets/cifar_net_8_5_10_0.0036000000000000034_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0035,0,2,2,CrossEntropyLoss,SGD,0.805258765,,64.46,84132,D29 filters,nets/cifar_net_8_5_10_0.0035000000000000035_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0034,0,2,2,CrossEntropyLoss,SGD,0.790965369,,65.39,84132,D29 filters,nets/cifar_net_8_5_10_0.0034000000000000037_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.002,0,2,2,CrossEntropyLoss,SGD,0.659045007,,68.02,84132,D29 filters,nets/cifar_net_8_5_10_0.002_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0019,0,2,2,CrossEntropyLoss,SGD,0.661091652,,69.24,84132,D29 filters,nets/cifar_net_8_5_10_0.0019_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0018,0,2,2,CrossEntropyLoss,SGD,0.673090771,,69.24,84132,D29 filters,nets/cifar_net_8_5_10_0.0018_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0017,0,2,2,CrossEntropyLoss,SGD,0.647642406,,67.22,84132,D29 filters,nets/cifar_net_8_5_10_0.0017_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0016,0,2,2,CrossEntropyLoss,SGD,0.65770903,,69.35,84132,D29 filters,nets/cifar_net_8_5_10_0.0015999999999999999_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0015,0,2,2,CrossEntropyLoss,SGD,0.658743304,,69,84132,D29 filters,nets/cifar_net_8_5_10_0.0014999999999999998_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0014,0,2,2,CrossEntropyLoss,SGD,0.656252137,,68.68,84132,D29 filters,nets/cifar_net_8_5_10_0.0013999999999999998_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0013,0,2,2,CrossEntropyLoss,SGD,0.659559088,,69.24,84132,D29 filters,nets/cifar_net_8_5_10_0.0012999999999999997_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0012,0,2,2,CrossEntropyLoss,SGD,0.645950741,,68.54,84132,D29 filters,nets/cifar_net_8_5_10_0.0011999999999999997_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0011,0,2,2,CrossEntropyLoss,SGD,0.662061331,,70.01,84132,D29 filters,nets/cifar_net_8_5_10_0.0010999999999999996_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.001,0,2,2,CrossEntropyLoss,SGD,0.660372675,,69.37,84132,D29 filters,nets/cifar_net_8_5_10_0.0009999999999999996_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0009,0,2,2,CrossEntropyLoss,SGD,0.685007282,,69.85,84132,D29 filters,nets/cifar_net_8_5_10_0.0008999999999999995_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0008,0,2,2,CrossEntropyLoss,SGD,0.691686062,,70.52,84132,D29 filters,nets/cifar_net_8_5_10_0.0007999999999999995_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0007,0,2,2,CrossEntropyLoss,SGD,0.710884158,,69.93,84132,D29 filters,nets/cifar_net_8_5_10_0.0006999999999999995_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0006,0,2,2,CrossEntropyLoss,SGD,0.741168278,,69.2,84132,D29 filters,nets/cifar_net_8_5_10_0.0005999999999999994_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0005,0,2,2,CrossEntropyLoss,SGD,0.74916851,,69.48,84132,D29 filters,nets/cifar_net_8_5_10_0.0004999999999999994_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0004,0,2,2,CrossEntropyLoss,SGD,0.838556576,,67.25,84132,D29 filters,nets/cifar_net_8_5_10_0.00039999999999999937_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0003,0,2,2,CrossEntropyLoss,SGD,0.893003526,,66.16,84132,D29 filters,nets/cifar_net_8_5_10_0.0002999999999999994_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,29,19,,10,0.0002,0,2,2,CrossEntropyLoss,SGD,0.990779107,,64.12,84132,D29 filters,nets/cifar_net_8_5_10_0.00019999999999999939_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
+8,5,48,48,48,30,0.001,0,2,2,CrossEntropyLoss,Adam,0.158282936,74.79,73.18,121162,48 filters,nets/cifar_net_8_5_30_0.001_2_2_Adam_ReduceLROnPlateau_48_48_48_48 filters_0_CrossEntropyLoss.pth
