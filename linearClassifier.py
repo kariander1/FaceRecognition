@@ -92,7 +92,7 @@ def calc_test_loss(net, test_loader, criterion):
     num_of_test_images = 0
     for test_data in test_loader:
         num_of_test_images += 1
-        test_images, test_labels = test_data
+        test_images, test_labels = test_data[0].to(device), test_data[1].to(device)
         # calculate outputs by running images through the network
         test_outputs = net(test_images)
         test_loss = criterion(test_outputs, test_labels)
@@ -115,7 +115,7 @@ def train_net(net, train_loader, test_loader, optimizer,scheduler, criterion, sa
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+            inputs, labels = data[0].to(device), data[1].to(device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -169,7 +169,7 @@ def calc_accuracy(test_loader, net, calc_per_class=False):
     # since we're not training, we don't need to calculate the gradients for our outputs
     with torch.no_grad():
         for data in test_loader:
-            images, labels = data
+            images, labels = data[0].to(device), data[1].to(device)
             # calculate outputs by running images through the network
             outputs = net(images)
             # the class with the highest energy is what we choose as prediction
@@ -226,10 +226,10 @@ for i in range(1, 2):
     csv_name = r'accuracy_chart.csv'
     batch_size = 8
     filter_size = 5
-    epochs = 11
-    num_of_filters = 32
-    num_of_filters_2 = 1024
-    num_of_filters_3 = 32
+    epochs = 30
+    num_of_filters = 128
+    num_of_filters_2 = 64
+    num_of_filters_3 = 64
     learning_rate = 0.001
     weight_decay = 0
     pooling_size = 2
@@ -257,9 +257,9 @@ for i in range(1, 2):
     train_transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-         transforms.RandomHorizontalFlip(0.5),
-         transforms.ColorJitter(brightness=.5, hue=.3),
-         transforms.RandomApply(transforms=[transforms.RandomResizedCrop(size=(32, 32))], p=0.5)
+         transforms.RandomHorizontalFlip(0.1),
+         #transforms.ColorJitter(brightness=.5, hue=.3),
+         transforms.RandomApply(transforms=[transforms.RandomResizedCrop(size=(32, 32))], p=0.1)
          ])
 
     # test_transform = transforms.Compose(
