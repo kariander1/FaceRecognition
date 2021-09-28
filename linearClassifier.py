@@ -281,7 +281,7 @@ for i in range(1, 2):
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=0)
 
     classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'trfuck')
+               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     # get some random training images
     data_iter = iter(train_loader)
