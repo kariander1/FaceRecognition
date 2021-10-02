@@ -71,48 +71,54 @@ class CNN(nn.Module):
 
         return x
 
+
 # Define NET class with RELU activation
 class Net(nn.Module):
     def __init__(self, dropout_rate, filter_size, pooling_size, num_of_filters, num_of_filters_2, num_of_filters_3,
                  num_of_filters_4):
         super().__init__()
-        # TODO: Define layers for better accuracy (depth)
-        # TODO: Define filter size
-        # TODO: Check how to define/random weights if needed
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=num_of_filters, kernel_size=filter_size, stride=1,
-                               padding='same')
-        self.conv1_bn = nn.BatchNorm2d(num_of_filters)
-        self.pool = nn.MaxPool2d(pooling_size, pooling_size)
-        self.dropout = nn.Dropout2d(dropout_rate)
-        self.conv2 = nn.Conv2d(num_of_filters, num_of_filters_2, filter_size, padding='same')
-        self.conv2_bn = nn.BatchNorm2d(num_of_filters_2)
-        self.conv3 = nn.Conv2d(num_of_filters_2, num_of_filters_3, filter_size, padding='same')
-        self.conv3_bn = nn.BatchNorm2d(num_of_filters_3)
-        self.conv4 = nn.Conv2d(num_of_filters_3, num_of_filters_4, filter_size, padding='same')
-        self.conv4_bn = nn.BatchNorm2d(num_of_filters_4)
-        self.fc1 = nn.Linear(num_of_filters_4 * 2 * 2, 10)
-        # self.fc2 = nn.Linear(120, 10)
-        # self.fc3 = nn.Linear(84, 10)
+        self.conv_layer = nn.Sequential(
+
+            nn.Conv2d(in_channels=3, out_channels=num_of_filters, kernel_size=filter_size, stride=1,
+                      padding='same'),
+            nn.BatchNorm2d(num_of_filters),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(pooling_size, pooling_size),
+            # nn.Dropout2d(dropout_rate),
+            nn.Conv2d(num_of_filters, num_of_filters_2, filter_size, padding='same'),
+            nn.BatchNorm2d(num_of_filters_2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(pooling_size, pooling_size),
+            nn.Conv2d(num_of_filters_2, num_of_filters_3, filter_size, padding='same'),
+            nn.BatchNorm2d(num_of_filters_3),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(pooling_size, pooling_size),
+            nn.Conv2d(num_of_filters_3, num_of_filters_4, filter_size, padding='same'),
+            nn.BatchNorm2d(num_of_filters_4),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(pooling_size, pooling_size)
+        )
+        self.fc_layer = nn.Sequential(
+            nn.Dropout(p=dropout_rate),
+            nn.Linear(num_of_filters_4 * 2 * 2, 10)
+            # self.fc2 = nn.Linear(120, 10)
+            # self.fc3 = nn.Linear(84, 10)
+        )
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = F.relu(x)
-        x = self.conv1_bn(x)
-        x = self.pool(x)
-        x = self.conv2(x)
-        x = F.relu(x)
-        x = self.conv2_bn(x)
-        x = self.pool(x)
-        x = self.conv3(x)
-        x = F.relu(x)
-        x = self.conv3_bn(x)
-        x = self.pool(x)
-        x = self.conv4(x)
-        x = F.relu(x)
-        x = self.conv4_bn(x)
-        x = self.pool(x)
-        x = torch.flatten(x, 1)  # flatten all dimensions except batch
-        x = self.fc1(x)
+        """Perform forward."""
+
+        # conv layers
+        x = self.conv_layer(x)
+
+        # flatten
+        x = x.view(x.size(0), -1)
+
+        # fc layer
+        x = self.fc_layer(x)
+
+        # x = torch.flatten(x, 1)  # flatten all dimensions except batch
+        # x = self.fc1(x)
         # x = self.fc2(x)
         # x = self.fc3(x)
         return x
@@ -213,9 +219,7 @@ def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, s
                 # Run test data and calculate loss
 
                 test_loss = calc_test_loss(net=net, test_loader=test_loader, criterion=criterion)
-                scheduler.step()
-                sched_cnt += 1
-                print("sched step " + str(sched_cnt) + " - lr is " + str(optimizer.param_groups[0]['lr']))
+
                 test_losses.append(test_loss)
 
                 test_acc = calc_accuracy(test_loader, net)
@@ -232,6 +236,10 @@ def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, s
                                               figure=loss_figure)
 
             iteration = iteration + 1
+        scheduler.step()
+        sched_cnt += 1
+        print("sched step " + str(sched_cnt) + " - lr is " + str(optimizer.param_groups[0]['lr']))
+
 
     print('Finished Training')
     torch.save(net.state_dict(), save_path)
@@ -306,6 +314,7 @@ for i in range(1, 2):
     epochs = 30
     dropout_rate = 0.05
     num_of_filters = 32
+    milestones = [6, 10, 18]
     num_of_filters_2 = 64
     num_of_filters_3 = 128
     num_of_filters_4 = 256
@@ -399,7 +408,7 @@ for i in range(1, 2):
     fields["Loss Function"] = criterion_str
     # TODO : Change optimizer (maybe to ADAM)
     optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[6, 10], gamma=0.1)
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=milestones, gamma=0.1)
     scheduler_str = type(scheduler).__name__
     optimizer_str = type(optimizer).__name__
     fields["Optimizer"] = optimizer_str
