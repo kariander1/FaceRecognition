@@ -12,12 +12,69 @@ import torchvision.transforms as transforms
 from prettytable import PrettyTable
 
 
-# from torch.utils.tensorboard import SummaryWriter
+class CNN(nn.Module):
+    """CNN."""
 
+    def __init__(self):
+        """CNN Builder."""
+        super(CNN, self).__init__()
+
+        self.conv_layer = nn.Sequential(
+
+            # Conv Layer block 1
+            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            # Conv Layer block 2
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout2d(p=0.05),
+
+            # Conv Layer block 3
+            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+
+        self.fc_layer = nn.Sequential(
+            nn.Dropout(p=0.1),
+            nn.Linear(4096, 1024),
+            nn.ReLU(inplace=True),
+            nn.Linear(1024, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.1),
+            nn.Linear(512, 10)
+        )
+
+    def forward(self, x):
+        """Perform forward."""
+
+        # conv layers
+        x = self.conv_layer(x)
+
+        # flatten
+        x = x.view(x.size(0), -1)
+
+        # fc layer
+        x = self.fc_layer(x)
+
+        return x
 
 # Define NET class with RELU activation
 class Net(nn.Module):
-    def __init__(self, filter_size, pooling_size, num_of_filters, num_of_filters_2, num_of_filters_3):
+    def __init__(self, dropout_rate, filter_size, pooling_size, num_of_filters, num_of_filters_2, num_of_filters_3,
+                 num_of_filters_4):
         super().__init__()
         # TODO: Define layers for better accuracy (depth)
         # TODO: Define filter size
@@ -26,18 +83,34 @@ class Net(nn.Module):
                                padding='same')
         self.conv1_bn = nn.BatchNorm2d(num_of_filters)
         self.pool = nn.MaxPool2d(pooling_size, pooling_size)
+        self.dropout = nn.Dropout2d(dropout_rate)
         self.conv2 = nn.Conv2d(num_of_filters, num_of_filters_2, filter_size, padding='same')
         self.conv2_bn = nn.BatchNorm2d(num_of_filters_2)
-        self.conv3 = nn.Conv2d(num_of_filters_2, num_of_filters_3, filter_size)
+        self.conv3 = nn.Conv2d(num_of_filters_2, num_of_filters_3, filter_size, padding='same')
         self.conv3_bn = nn.BatchNorm2d(num_of_filters_3)
-        self.fc1 = nn.Linear(num_of_filters_3 * 2 * 2, 10)
+        self.conv4 = nn.Conv2d(num_of_filters_3, num_of_filters_4, filter_size, padding='same')
+        self.conv4_bn = nn.BatchNorm2d(num_of_filters_4)
+        self.fc1 = nn.Linear(num_of_filters_4 * 2 * 2, 10)
         # self.fc2 = nn.Linear(120, 10)
         # self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1_bn(self.conv1(x))))
-        x = self.pool(F.relu(self.conv2_bn(self.conv2(x))))
-        x = self.pool(F.relu(self.conv3_bn(self.conv3(x))))
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.conv1_bn(x)
+        x = self.pool(x)
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = self.conv2_bn(x)
+        x = self.pool(x)
+        x = self.conv3(x)
+        x = F.relu(x)
+        x = self.conv3_bn(x)
+        x = self.pool(x)
+        x = self.conv4(x)
+        x = F.relu(x)
+        x = self.conv4_bn(x)
+        x = self.pool(x)
         x = torch.flatten(x, 1)  # flatten all dimensions except batch
         x = self.fc1(x)
         # x = self.fc2(x)
@@ -102,14 +175,16 @@ def calc_test_loss(net, test_loader, criterion):
 
 
 # Trains the given train loader and saves the trained net in the path given
-def train_net(net, train_loader, test_loader, optimizer,scheduler, criterion, save_path, passes=2, status_every_batch=2000):
+def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, save_path, passes=2,
+              status_every_batch=2000):
     train_losses = []
     iterations = []
     test_accuracies = []
     test_losses = []
     iteration = 1
     loss_figure = None
-    max_acc = 0;
+    max_acc = 0
+    sched_cnt = 0
     for epoch in range(passes):  # loop over the dataset multiple times
 
         running_loss = 0.0
@@ -138,7 +213,9 @@ def train_net(net, train_loader, test_loader, optimizer,scheduler, criterion, sa
                 # Run test data and calculate loss
 
                 test_loss = calc_test_loss(net=net, test_loader=test_loader, criterion=criterion)
-                scheduler.step(train_loss)
+                scheduler.step()
+                sched_cnt += 1
+                print("sched step " + str(sched_cnt) + " - lr is " + str(optimizer.param_groups[0]['lr']))
                 test_losses.append(test_loss)
 
                 test_acc = calc_accuracy(test_loader, net)
@@ -227,21 +304,25 @@ for i in range(1, 2):
     batch_size = 8
     filter_size = 5
     epochs = 30
-    num_of_filters = 128
+    dropout_rate = 0.05
+    num_of_filters = 32
     num_of_filters_2 = 64
-    num_of_filters_3 = 64
+    num_of_filters_3 = 128
+    num_of_filters_4 = 256
     learning_rate = 0.001
     weight_decay = 0
     pooling_size = 2
     momentum = 0.9
     num_of_fc = 2
-    test_name = '48 filters'
+    test_name = '3X3 filter'
 
     fields['Batch Size'] = batch_size
+    fields['Dropout Rate'] = dropout_rate
     fields['Filter Size'] = filter_size
     fields['Filter Count'] = num_of_filters
     fields['Filter Count 2'] = num_of_filters_2
     fields['Filter Count 3'] = num_of_filters_3
+    fields['Filter Count 4'] = num_of_filters_4
     fields['Epochs'] = epochs
     fields['Learning Rate'] = learning_rate
     fields['Weight Decay'] = 0
@@ -258,15 +339,16 @@ for i in range(1, 2):
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
          transforms.RandomHorizontalFlip(0.1),
-         #transforms.ColorJitter(brightness=.5, hue=.3),
-         transforms.RandomApply(transforms=[transforms.RandomResizedCrop(size=(32, 32))], p=0.1)
+         # transforms.ColorJitter(brightness=.5, hue=.3),
+         transforms.RandomCrop(32, padding=4),
+         transforms.RandomHorizontalFlip(),
+         # transforms.RandomRotation(degrees=90)
          ])
 
     # test_transform = transforms.Compose(
     #     [transforms.ToTensor(),
     #      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
 
     # Define directory to save dataset images
     data_directory = './data'
@@ -299,8 +381,15 @@ for i in range(1, 2):
     print(device)
 
     # Create new Net
-    net = Net(filter_size=filter_size, pooling_size=pooling_size, num_of_filters=num_of_filters,
-              num_of_filters_2=num_of_filters_2, num_of_filters_3=num_of_filters_3)
+    net = Net(filter_size=filter_size,
+              dropout_rate=dropout_rate,
+              pooling_size=pooling_size,
+              num_of_filters=num_of_filters,
+              num_of_filters_2=num_of_filters_2,
+              num_of_filters_3=num_of_filters_3,
+              num_of_filters_4=num_of_filters_4)
+    # Count how many parameters we used foreach layer
+    param_count = count_parameters(net)
     # writer = SummaryWriter('logs/')
     # writer.add_graph(net, images)
     # writer.close()
@@ -309,8 +398,8 @@ for i in range(1, 2):
     criterion_str = type(criterion).__name__
     fields["Loss Function"] = criterion_str
     # TODO : Change optimizer (maybe to ADAM)
-    optimizer = optim.Adam(net.parameters(), lr=learning_rate,weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer,patience=1)
+    optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[6, 10], gamma=0.1)
     scheduler_str = type(scheduler).__name__
     optimizer_str = type(optimizer).__name__
     fields["Optimizer"] = optimizer_str
@@ -355,8 +444,6 @@ for i in range(1, 2):
     # Calculate accuracy on test images
     test_accuracy = calc_accuracy(test_loader, net, calc_per_class=True)
     fields["Test Accuracy"] = test_accuracy
-    # Count how many parameters we used foreach layer
-    param_count = count_parameters(net)
 
     fields["Parameters"] = param_count
     fields['Comment'] = test_name

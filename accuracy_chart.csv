@@ -194,3 +194,4 @@ Batch Size,Filter Size,Filters count 1,Filters count 2,Filters count 3,Epochs,Le
 8,5,29,19,,10,0.0002,0,2,2,CrossEntropyLoss,SGD,0.990779107,,64.12,84132,D29 filters,nets/cifar_net_8_5_10_0.00019999999999999939_2_2_SGD_29_19_D29 filters_0_CrossEntropyLoss.pth
 8,5,48,48,48,30,0.001,0,2,2,CrossEntropyLoss,Adam,0.158282936,74.79,73.18,121162,48 filters,nets/cifar_net_8_5_30_0.001_2_2_Adam_ReduceLROnPlateau_48_48_48_48 filters_0_CrossEntropyLoss.pth
 8,5,48,48,48,30,0.001,0,2,2,CrossEntropyLoss,Adam,0.5830531301219016,74.41,74.09,121162,48 filters,nets/cifar_net_8_5_30_0.001_2_2_Adam_ReduceLROnPlateau_48_48_48_48 filters_0_CrossEntropyLoss.pth
+8,5,128,64,64,30,0.001,0,2,2,CrossEntropyLoss,Adam,0.5383019235301763,75.53,74.8,320138,48 filters,nets/cifar_net_8_5_30_0.001_2_2_Adam_ReduceLROnPlateau_128_64_64_48 filters_0_CrossEntropyLoss.pth
