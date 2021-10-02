@@ -245,18 +245,18 @@ def count_parameters(model):
 
 # Define batch size for stochastic gradient descent
 
-for i in range(1, 2):
+for i in range(1, 8):
     fields = {}
     csv_name = r'accuracy_chart.csv'
     batch_size = 8
     filter_size = 3
     epochs = 30
     dropout_rate = 0.05
-    num_of_filters = 32
+    num_of_filters = 32-i
     milestones = [8, 16, 24]
-    num_of_filters_2 = 64
-    num_of_filters_3 = 128
-    num_of_filters_4 = 256
+    num_of_filters_2 = 2*num_of_filters
+    num_of_filters_3 = 2*num_of_filters_2
+    num_of_filters_4 = 2*num_of_filters_3
     learning_rate = 0.001
     weight_decay = 0
     pooling_size = 2
