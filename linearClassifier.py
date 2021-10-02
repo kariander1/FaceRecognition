@@ -22,20 +22,20 @@ class Net(nn.Module):
                       padding='same'),
             nn.BatchNorm2d(num_of_filters),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(pooling_size, pooling_size),
+            nn.AvgPool2d(pooling_size, pooling_size),
             # nn.Dropout2d(dropout_rate),
             nn.Conv2d(num_of_filters, num_of_filters_2, filter_size, padding='same'),
             nn.BatchNorm2d(num_of_filters_2),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(pooling_size, pooling_size),
+            nn.AvgPool2d(pooling_size, pooling_size),
             nn.Conv2d(num_of_filters_2, num_of_filters_3, filter_size, padding='same'),
             nn.BatchNorm2d(num_of_filters_3),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(pooling_size, pooling_size),
+            nn.AvgPool2d(pooling_size, pooling_size),
             nn.Conv2d(num_of_filters_3, num_of_filters_4, filter_size, padding='same'),
             nn.BatchNorm2d(num_of_filters_4),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(pooling_size, pooling_size)
+            nn.AvgPool2d(pooling_size, pooling_size)
         )
         self.fc_layer = nn.Sequential(
             nn.Dropout(p=dropout_rate),
@@ -253,7 +253,7 @@ for i in range(1, 2):
     epochs = 30
     dropout_rate = 0.05
     num_of_filters = 32
-    milestones = [6, 10, 18]
+    milestones = [8, 16, 24]
     num_of_filters_2 = 64
     num_of_filters_3 = 128
     num_of_filters_4 = 256
@@ -261,7 +261,7 @@ for i in range(1, 2):
     weight_decay = 0
     pooling_size = 2
     momentum = 0.9
-    num_of_fc = 2
+    num_of_fc = 1
     test_name = '3X3 filter'
 
     fields['Batch Size'] = batch_size
@@ -346,7 +346,7 @@ for i in range(1, 2):
     criterion_str = type(criterion).__name__
     fields["Loss Function"] = criterion_str
     # TODO : Change optimizer (maybe to ADAM)
-    optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = optim.AdamW(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=milestones, gamma=0.1)
     scheduler_str = type(scheduler).__name__
     optimizer_str = type(optimizer).__name__
