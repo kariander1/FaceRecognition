@@ -126,10 +126,11 @@ def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, s
     iterations = []
     test_accuracies = []
     test_losses = []
+    learning_rates = []
     iteration = 1
     loss_figure = None
     max_acc = 0
-    sched_cnt = 0
+    #sched_cnt = 0
     for epoch in range(passes):  # loop over the dataset multiple times
 
         running_loss = 0.0
@@ -149,45 +150,64 @@ def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, s
             # print statistics
             running_loss += loss.item()
 
-            if i % status_every_batch == status_every_batch - 1:  # print every 2000 mini-batches
+            if i % status_every_batch == status_every_batch - 1:  # print every status_every_batch mini-batches
 
+                # Calculate AVG train loss across the batch
                 train_loss = running_loss / status_every_batch
-
-                train_losses.append(train_loss)
                 running_loss = 0.0
                 # Run test data and calculate loss
-
                 test_loss = calc_test_loss(net=net, test_loader=test_loader, criterion=criterion)
-                scheduler.step(test_loss)
-                test_losses.append(test_loss)
-
                 test_acc = calc_accuracy(test_loader, net)
-                test_accuracies.append(test_acc)
+                learning_rate = optimizer.param_groups[0]['lr']
+
                 if test_acc > max_acc:
+                    # Save current NET
+                    save_path_new = save_path.replace('.pth', str(test_acc) + '.pth')
+                    torch.save(net.state_dict(), save_path_new)
                     max_acc = test_acc
+
                 iterations.append(iteration)
-                print('[%d, %5d] train loss: %.3f test loss: %.3f test accuracy: %.2f %%' %
-                      (epoch + 1, i + 1, train_loss, test_loss, test_acc))
-                # loss_figure = show_loss_graph(train_loss_vector=train_losses,
-                #                               test_loss_vector=test_losses,
-                #                               test_accuracy_vector=test_accuracies,
-                #                               iterations_vector=iterations,
-                #                               figure=loss_figure)
+                train_losses.append(train_loss)
+                test_losses.append(test_loss)
+                learning_rates.append(learning_rate)
+                test_accuracies.append(test_acc)
+                print('[%d, %5d] train loss: %.3f test loss: %.3f test accuracy: %.3f %% LR: %f' %
+                      (epoch + 1, i + 1, train_loss, test_loss, test_acc,learning_rate))
+                loss_figure = show_loss_graph(train_loss_vector=train_losses,
+                                              test_loss_vector=test_losses,
+                                              test_accuracy_vector=test_accuracies,
+                                              iterations_vector=iterations,
+                                              figure=loss_figure)
+                scheduler.step(test_loss)
 
             iteration = iteration + 1
         #scheduler.step()
-        sched_cnt += 1
-        print("sched step " + str(sched_cnt) + " - lr is " + str(optimizer.param_groups[0]['lr']))
+        #sched_cnt += 1
+        #print("sched step " + str(sched_cnt) + " - lr is " + str(optimizer.param_groups[0]['lr']))
 
 
     print('Finished Training')
     torch.save(net.state_dict(), save_path)
 
-    # Return loss
+    data_path = save_path.replace('.pth', '.csv')
+    print('Exporting train data to ' + data_path)
+
+    # Export data to csv
+    fields = ['Iterations', 'Train Loss', 'Test Loss', 'Learning Rate', 'Test Accuracy']
+    with open(data_path, 'w') as f:
+
+        # using csv.writer method from CSV package
+        write = csv.writer(f)
+
+        write.writerow(fields)
+        for i in range(len(iterations)):
+            write.writerow(str(iterations[i]) + ',' + str(train_losses[i]) + ',' + str(test_losses[i]) + ',' + str(
+                learning_rates[i]) + ',' + str(test_accuracies[i]) + ',')
+
     return [train_losses[-1], max_acc]
 
 
-def calc_accuracy(test_loader, net, calc_per_class=False):
+def calc_accuracy(test_loader, net, calc_per_class=False, print_acc=False):
     correct = 0
     total = 0
     # since we're not training, we don't need to calculate the gradients for our outputs
@@ -201,8 +221,10 @@ def calc_accuracy(test_loader, net, calc_per_class=False):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     accuracy = 100.0 * correct / total
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-        accuracy))
+    if print_acc is True:
+        print('Accuracy of the network on the 10000 test images: %.2f %%' % (
+            accuracy))
+
     test_accuracy = accuracy
     if calc_per_class:
         # prepare to count predictions for each class
@@ -250,8 +272,8 @@ for i in range(1,2):
     csv_name = r'accuracy_chart.csv'
     batch_size = 8
     filter_size = 3
-    epochs = 40
-    dropout_rate = 0.05
+    epochs = 60
+    dropout_rate = 0.05*i
     num_of_filters = 32
     milestones = [8, 16, 24]
     num_of_filters_2 = 64
@@ -352,7 +374,7 @@ for i in range(1,2):
     scheduler_str = type(scheduler).__name__
     optimizer_str = type(optimizer).__name__
     fields["Optimizer"] = optimizer_str
-    net_path = 'nets/cifar_net_' + str(batch_size) + '_' + str(filter_size) + '_' + str(epochs) + '_' + str(
+    net_path = 'nets/cifar10_net_' + str(batch_size) + '_' + str(filter_size) + '_' + str(epochs) + '_' + str(
         learning_rate) + '_' + str(pooling_size) + '_' + str(
         num_of_fc) + '_' + optimizer_str + '_' + scheduler_str + '_' + str(num_of_filters) + '_' + str(
         num_of_filters_2) + '_' + str(num_of_filters_3) + '_' + test_name + '_' + str(
@@ -391,7 +413,7 @@ for i in range(1,2):
     #                              for j in range(4)))
 
     # Calculate accuracy on test images
-    test_accuracy = calc_accuracy(test_loader, net, calc_per_class=True)
+    test_accuracy = calc_accuracy(test_loader, net, calc_per_class=True,print_acc=True)
     fields["Test Accuracy"] = test_accuracy
 
     fields["Parameters"] = param_count
