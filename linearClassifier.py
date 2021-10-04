@@ -158,7 +158,7 @@ def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, s
                 # Run test data and calculate loss
 
                 test_loss = calc_test_loss(net=net, test_loader=test_loader, criterion=criterion)
-
+                scheduler.step(test_loss)
                 test_losses.append(test_loss)
 
                 test_acc = calc_accuracy(test_loader, net)
@@ -168,14 +168,14 @@ def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, s
                 iterations.append(iteration)
                 print('[%d, %5d] train loss: %.3f test loss: %.3f test accuracy: %.2f %%' %
                       (epoch + 1, i + 1, train_loss, test_loss, test_acc))
-                loss_figure = show_loss_graph(train_loss_vector=train_losses,
-                                              test_loss_vector=test_losses,
-                                              test_accuracy_vector=test_accuracies,
-                                              iterations_vector=iterations,
-                                              figure=loss_figure)
+                # loss_figure = show_loss_graph(train_loss_vector=train_losses,
+                #                               test_loss_vector=test_losses,
+                #                               test_accuracy_vector=test_accuracies,
+                #                               iterations_vector=iterations,
+                #                               figure=loss_figure)
 
             iteration = iteration + 1
-        scheduler.step()
+        #scheduler.step()
         sched_cnt += 1
         print("sched step " + str(sched_cnt) + " - lr is " + str(optimizer.param_groups[0]['lr']))
 
@@ -245,18 +245,18 @@ def count_parameters(model):
 
 # Define batch size for stochastic gradient descent
 
-for i in range(1, 8):
+for i in range(1,2):
     fields = {}
     csv_name = r'accuracy_chart.csv'
     batch_size = 8
     filter_size = 3
-    epochs = 30
+    epochs = 40
     dropout_rate = 0.05
-    num_of_filters = 32-i
+    num_of_filters = 32
     milestones = [8, 16, 24]
-    num_of_filters_2 = 2*num_of_filters
-    num_of_filters_3 = 2*num_of_filters_2
-    num_of_filters_4 = 2*num_of_filters_3
+    num_of_filters_2 = 64
+    num_of_filters_3 = 32
+    num_of_filters_4 = 32
     learning_rate = 0.001
     weight_decay = 0
     pooling_size = 2
@@ -347,7 +347,8 @@ for i in range(1, 8):
     fields["Loss Function"] = criterion_str
     # TODO : Change optimizer (maybe to ADAM)
     optimizer = optim.AdamW(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=milestones, gamma=0.1)
+    #scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=milestones, gamma=0.1)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6, threshold=0.0001, threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08, verbose=True)
     scheduler_str = type(scheduler).__name__
     optimizer_str = type(optimizer).__name__
     fields["Optimizer"] = optimizer_str
