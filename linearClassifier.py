@@ -194,15 +194,15 @@ def train_net(net, train_loader, test_loader, optimizer, scheduler, criterion, s
 
     # Export data to csv
     fields = ['Iterations', 'Train Loss', 'Test Loss', 'Learning Rate', 'Test Accuracy']
-    with open(data_path, 'w') as f:
+    with open(data_path, 'w',newline='') as f:
 
         # using csv.writer method from CSV package
         write = csv.writer(f)
 
         write.writerow(fields)
         for i in range(len(iterations)):
-            write.writerow(str(iterations[i]) + ',' + str(train_losses[i]) + ',' + str(test_losses[i]) + ',' + str(
-                learning_rates[i]) + ',' + str(test_accuracies[i]) + ',')
+            row_str = [iterations[i], train_losses[i], test_losses[i], learning_rates[i], test_accuracies[i]]
+            write.writerow(row_str)
 
     return [train_losses[-1], max_acc]
 
