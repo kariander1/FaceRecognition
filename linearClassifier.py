@@ -20,6 +20,7 @@ class Net(nn.Module):
 
             nn.Conv2d(in_channels=3, out_channels=num_of_filters, kernel_size=filter_size, stride=1,
                       padding='same'),
+            # TODO: Try batch after activations
             nn.BatchNorm2d(num_of_filters),
             nn.ReLU(inplace=True),
             nn.AvgPool2d(pooling_size, pooling_size),
@@ -273,9 +274,8 @@ for i in range(1,2):
     batch_size = 8
     filter_size = 3
     epochs = 60
-    dropout_rate = 0.05*i
+    dropout_rate = 0.05
     num_of_filters = 32
-    milestones = [8, 16, 24]
     num_of_filters_2 = 64
     num_of_filters_3 = 32
     num_of_filters_4 = 32
@@ -310,15 +310,11 @@ for i in range(1,2):
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
          # transforms.RandomHorizontalFlip(0.1),
          # transforms.ColorJitter(brightness=.5, hue=.3),
+         # TODO: Try random crop of [25,32] pixels and resize back to 32
          transforms.RandomCrop(32, padding=4),
          transforms.RandomHorizontalFlip(),
          # transforms.RandomRotation(degrees=90)
          ])
-
-    # test_transform = transforms.Compose(
-    #     [transforms.ToTensor(),
-    #      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # Define directory to save dataset images
     data_directory = './data'
@@ -329,7 +325,7 @@ for i in range(1,2):
 
     # Changed num_workers to 0 since running on windows.
     # Test set
-    test_set = torchvision.datasets.CIFAR10(root=data_directory, train=False, download=True, transform=train_transform)
+    test_set = torchvision.datasets.CIFAR10(root=data_directory, train=False, download=True, transform=transform)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=0)
 
     classes = ('plane', 'car', 'bird', 'cat',
