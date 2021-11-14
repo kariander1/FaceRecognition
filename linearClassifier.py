@@ -306,13 +306,14 @@ for i in range(1,2):
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     train_transform = transforms.Compose(
-        [transforms.ToTensor(),
-         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        [
          # transforms.RandomHorizontalFlip(0.1),
          # transforms.ColorJitter(brightness=.5, hue=.3),
          # TODO: Try random crop of [25,32] pixels and resize back to 32
          transforms.RandomCrop(32, padding=4),
          transforms.RandomHorizontalFlip(),
+         transforms.ToTensor(),
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
          # transforms.RandomRotation(degrees=90)
          ])
 
