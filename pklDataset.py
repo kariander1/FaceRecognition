@@ -11,48 +11,65 @@ class PklDataset(Dataset):
     A dataset representing embedded vectors of face recognition
     """
 
-    def __init__(self, pklFilePath):
+    def __init__(self, pkl_file_path,infer_classes_and_n_records=False):
         """
         :param pklFilePath:
 
         """
         super().__init__()
         print("Loading dataframe..")
-        self.dataframe = pd.read_pickle(pklFilePath)
-        self.nRecords = self.dataframe.shape[0]
+        self.pkl_file_path = pkl_file_path
+        self.pkl_file = open(pkl_file_path, 'rb')
+        self.n_records = pickle.load(self.pkl_file)
+        self.classes = pickle.load(self.pkl_file)
+        if infer_classes_and_n_records:
+            self._infer_classes_and_n_records()
+        self.iterator = self._get_image()
+
+    def _infer_classes_and_n_records(self):
+        labels_set = set()
+        n_records = 0
+        raw_data = self._load_batch(return_on_failure=True)
+        while raw_data is not None:
+            n_records += raw_data.shape[0]
+            labels_set.update(raw_data[:, 0].cpu().detach().tolist())
+            raw_data = self._load_batch(return_on_failure=True)
+        self.n_records = n_records
+        self.classes = [int(item) for item in labels_set]
 
     def __getitem__(self, index: int) -> Tuple[Tensor, int]:
-        """
-        Returns a labeled sample.
-        :param index: Sample index.
-        :return: A tuple (sample, label) containing the image and its class label.
-        Raises a ValueError if index is out of range.
-        """
 
-        # TODO:
-        #  Create a random image tensor and return it.
-        #  Make sure to always return the same image for the
-        #  same index (make it deterministic per index), but don't mess-up
-        #  the random state outside this method.
-        #  Raise a ValueError if the index is out of range.
-        # ====== YOUR CODE: ======
-        raw_data = self.dataframe.iloc[index]
+        return next(self.iterator)
 
-        label = raw_data.iloc[0]
-        image = torch.tensor(raw_data.iloc[1:].values)
-        # if index >= self.num_samples or index < 0:
-        #     raise ValueError()
-        # with torch_temporary_seed(index):
-        #     (image, label) = random_labelled_image(self.image_dim, self.num_classes)
-        return image, label
-        # ========================
+    def _get_image(self) -> Tuple[Tensor, int]:
+        while True:
+            raw_data = self._load_batch()
+            for feature_tensor in raw_data:
+                label = int(feature_tensor[0].item())
+                image = feature_tensor[1:]
+                yield image, label
+
+    def _load_batch(self,return_on_failure = False):
+
+        try:
+            raw_data = pickle.load(self.pkl_file)
+        except EOFError:
+            if return_on_failure:
+                return None
+            #print("Reopening pkl file...")
+            self.pkl_file.close()
+            self.pkl_file = open(self.pkl_file_path, 'rb')
+            nRecords = pickle.load(self.pkl_file)
+            classes = pickle.load(self.pkl_file)
+            raw_data = pickle.load(self.pkl_file)
+        return raw_data
 
     def __len__(self):
         """
         :return: Number of samples in this dataset.
         """
         # ====== YOUR CODE: ======
-        return self.nRecords
+        return self.n_records
         # ========================
 
 #

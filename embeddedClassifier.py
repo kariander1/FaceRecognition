@@ -1,6 +1,7 @@
 import csv
 import os.path
 
+import DeepLearning.experiments
 import pklDataset
 import matplotlib.pyplot as plt
 import numpy as np
@@ -272,7 +273,7 @@ def count_parameters(model):
 
 fields = {}
 csv_name = r'accuracy_chart.csv'
-batch_size = 8
+batch_size = 64
 filter_size = 3
 epochs = 60
 dropout_rate = 0.05
@@ -300,128 +301,25 @@ fields['Weight Decay'] = 0
 fields['Pooling Size'] = pooling_size
 fields['Number of FC'] = num_of_fc
 
-# The output of torchvision datasets are PILImage images of range [0, 1].
-# We transform them to Tensors of normalized range [-1, 1].
-# transform = transforms.Compose(
-#     [transforms.ToTensor(),
-#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-# train_transform = transforms.Compose(
-#     [
-#      # transforms.RandomHorizontalFlip(0.1),
-#      # transforms.ColorJitter(brightness=.5, hue=.3),
-#      # TODO: Try random crop of [25,32] pixels and resize back to 32
-#      transforms.RandomCrop(32, padding=4),
-#      transforms.RandomHorizontalFlip(),
-#      transforms.ToTensor(),
-#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-#      # transforms.RandomRotation(degrees=90)
-#      ])
-
 # Define directory to save dataset images
 data_directory = './data'
-pkl_path = './Insight/insightface/recognition/arcface_torch/pickled_data.pkl'
+pkl_path = 'Insight/insightface/recognition/arcface_torch/r50_features.pkl'
 # Download CIFAR10 data set into ./data directory
 # Datasets
-pkl_dataset = pklDataset.PklDataset(pkl_path)
+pkl_dataset = pklDataset.PklDataset(pkl_path, infer_classes_and_n_records=True)
 # train_set = torchvision.datasets.CIFAR10(root=data_directory, train=True, download=True, transform=train_transform)
-pkl_loader = torch.utils.data.DataLoader(pkl_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
-# Changed num_workers to 0 since running on windows.
-# Test set
-# test_set = torchvision.datasets.CIFAR10(root=data_directory, train=False, download=True, transform=transform)
-# test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=0)
+# TODO enable also shuffle
+# pkl_loader = torch.utils.data.DataLoader(pkl_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+loss_fn = torch.nn.CrossEntropyLoss()
+#optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+fit_res = DeepLearning.experiments.cnn_experiment(run_name="rs50_features", ds_train=pkl_dataset, ds_test=pkl_dataset,
+                                                  bs_train=128, bs_test=128,
+                                                  batches=1000, epochs=100, early_stopping=20,
+                                                  filters_per_layer=[64, 128, 256],
+                                                  layers_per_block=0, pool_every=4, hidden_dims=[32, 64, 32, 32],
+                                                  lr=0.001, loss_fn=loss_fn,
+                                                  model_type="cnn")
 
-# get some random training images
-data_iter = iter(pkl_loader)
-images, labels = data_iter.next()
-
-# show images
-# im_show(torchvision.utils.make_grid(images))
-# print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
-# TODO use cosine distance for identity transform, verify it's 0
-# TODO define identity net
-# TODO define reg term for loss as proposed
-# TODO visualize training process (try tensor board)
-# Try selecting GPU with CUDA processors:
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-# Assuming that we are on a CUDA machine, this should print a CUDA device:
-print(device)
-
-# Create new Net
-net = Net(filter_size=filter_size,
-          dropout_rate=dropout_rate,
-          pooling_size=pooling_size,
-          num_of_filters=num_of_filters,
-          num_of_filters_2=num_of_filters_2,
-          num_of_filters_3=num_of_filters_3,
-          num_of_filters_4=num_of_filters_4)
-# Count how many parameters we used foreach layer
-param_count = count_parameters(net)
-# writer = SummaryWriter('logs/')
-# writer.add_graph(net, images)
-# writer.close()
-net.to(device)
-criterion = nn.CrossEntropyLoss()
-criterion_str = type(criterion).__name__
-fields["Loss Function"] = criterion_str
-# TODO : Change optimizer (maybe to ADAM)
-optimizer = optim.AdamW(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
-#scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=milestones, gamma=0.1)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6, threshold=0.0001, threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08, verbose=True)
-scheduler_str = type(scheduler).__name__
-optimizer_str = type(optimizer).__name__
-fields["Optimizer"] = optimizer_str
-net_path = 'nets/cifar10_net_' + str(batch_size) + '_' + str(filter_size) + '_' + str(epochs) + '_' + str(
-    learning_rate) + '_' + str(pooling_size) + '_' + str(
-    num_of_fc) + '_' + optimizer_str + '_' + scheduler_str + '_' + str(num_of_filters) + '_' + str(
-    num_of_filters_2) + '_' + str(num_of_filters_3) + '_' + test_name + '_' + str(
-    weight_decay) + '_' + criterion_str + '.pth'
-
-fields['Train Loss'] = 'Not Trained'
-if not os.path.isfile(net_path):
-    # If the net doesn't exist
-    print("Network wasn't found, training a new network:")
-    [train_loss, max_acc] = train_net(net=net, train_loader=train_loader, test_loader=test_loader,
-                                      optimizer=optimizer,
-                                      scheduler=scheduler,
-                                      criterion=criterion,
-                                      save_path=net_path, passes=epochs)
-    fields['Train Loss'] = train_loss
-    fields['Max Accuracy'] = max_acc
-
-# Take the first batch
-data_iter = iter(test_loader)
-images, labels = data_iter.next()
-
-# print images and labels given to the batch
-# im_show(torchvision.utils.make_grid(images))
-
-# print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
-# Load the net that was saved
-# net = Net()
-net.load_state_dict(torch.load(net_path))
-
-outputs = net(images)
-
-_, predicted = torch.max(outputs, 1)
-
-# print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-#                              for j in range(4)))
-
-# Calculate accuracy on test images
-test_accuracy = calc_accuracy(test_loader, net, calc_per_class=True,print_acc=True)
-fields["Test Accuracy"] = test_accuracy
-
-fields["Parameters"] = param_count
-fields['Comment'] = test_name
-fields['Net Name'] = net_path
-with open(csv_name, 'a', newline='') as outfile:
-    writer = csv.writer(outfile)
-    writer.writerow(fields.values())
+print("Finished")
