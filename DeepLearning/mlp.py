@@ -46,7 +46,7 @@ class MLP(nn.Module):
         """
         assert len(nonlins) == len(dims)
         self.in_dim = in_dim
-        self.out_dim = dims[-1]
+        #self.out_dim = dims[-1]
 
         # TODO:
         #  - Initialize the layers according to the requested dimensions. Use

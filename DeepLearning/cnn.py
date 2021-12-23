@@ -131,16 +131,13 @@ class CNN(nn.Module):
             torch.set_rng_state(rng_state)
 
     def _make_mlp(self):
-        # TODO:
-        #  - Create the MLP part of the model: (FC -> ACT)*M -> Linear
-        #  - Use the the MLP implementation from Part 1.
-        #  - The first Linear layer should have an input dim of equal to the number of
-        #    convolutional features extracted by the convolutional layers.
-        #  - The last Linear layer should have an output dim of out_classes.
         mlp: MLP = None
         # ====== YOUR CODE: ======
-        activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims) + ['none']
-        hidden_dims = self.hidden_dims + [self.out_classes]
+        #activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims) + ['none']
+        # TODO currently overriding out_classes
+        activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims)
+        hidden_dims = self.hidden_dims
+        #hidden_dims = self.hidden_dims + [self.out_classes]
 
         in_dim = self._n_features()
         mlp = MLP(in_dim=in_dim, dims=hidden_dims, nonlins=activations)

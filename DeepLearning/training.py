@@ -265,22 +265,18 @@ class ClassifierTrainer(Trainer):
         batch_loss: float
         num_correct: int
 
-        # TODO: Train the model on one batch of data.
-        #  - Forward pass
-        #  - Backward pass
-        #  - Update parameters
-        #  - Classify and calculate number of correct predictions
-        # ====== YOUR CODE: ======
 
         # Forward Pass
         y_hat = self.model(X)
-        loss = self.loss_fn(y_hat, y)
+        loss = self.loss_fn(y_hat, X)
         batch_loss = loss.item()
 
         # Backward-pass + Update parameters
-        self.optimizer.zero_grad()
+        if self.optimizer:
+            self.optimizer.zero_grad()
         loss.backward()
-        self.optimizer.step()
+        if self.optimizer:
+            self.optimizer.step()
 
         # Num of correct
         _, y_indices = torch.max(y_hat, dim=1)

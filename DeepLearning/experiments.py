@@ -161,8 +161,11 @@ def cnn_experiment(
     print(model)
     if loss_fn is None:
         loss_fn = torch.nn.CrossEntropyLoss()
-    if optimizer is None:
+    if optimizer is "identity":
+        optimizer = None
+    elif optimizer is None:
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+
 
     trainer = ClassifierTrainer(model, loss_fn, optimizer, device)
     fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test, num_epochs=epochs, checkpoints=checkpoints,

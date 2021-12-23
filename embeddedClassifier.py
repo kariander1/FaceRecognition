@@ -303,7 +303,7 @@ fields['Number of FC'] = num_of_fc
 
 # Define directory to save dataset images
 data_directory = './data'
-pkl_path = 'Insight/insightface/recognition/arcface_torch/r50_features.pkl'
+pkl_path = 'Insight/insightface/recognition/arcface_torch/r50_features_512.pkl'
 # Download CIFAR10 data set into ./data directory
 # Datasets
 pkl_dataset = pklDataset.PklDataset(pkl_path, infer_classes_and_n_records=True)
@@ -312,13 +312,13 @@ pkl_dataset = pklDataset.PklDataset(pkl_path, infer_classes_and_n_records=True)
 # TODO enable also shuffle
 # pkl_loader = torch.utils.data.DataLoader(pkl_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
-loss_fn = torch.nn.CrossEntropyLoss()
+loss_fn = torch.nn.CosineSimilarity()
 #optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 fit_res = DeepLearning.experiments.cnn_experiment(run_name="rs50_features", ds_train=pkl_dataset, ds_test=pkl_dataset,
-                                                  bs_train=128, bs_test=128,
+                                                  bs_train=64, bs_test=64, optimizer="identity",
                                                   batches=1000, epochs=100, early_stopping=20,
                                                   filters_per_layer=[64, 128, 256],
-                                                  layers_per_block=0, pool_every=4, hidden_dims=[32, 64, 32, 32],
+                                                  layers_per_block=0, pool_every=4, hidden_dims=[],
                                                   lr=0.001, loss_fn=loss_fn,
                                                   model_type="cnn")
 
