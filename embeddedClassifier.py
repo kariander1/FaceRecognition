@@ -303,10 +303,11 @@ fields['Number of FC'] = num_of_fc
 
 # Define directory to save dataset images
 data_directory = './data'
-pkl_path = 'Insight/insightface/recognition/arcface_torch/r50_features_512.pkl'
+pkl_path1 = 'Insight/insightface/recognition/arcface_torch/r18_features'
+pkl_path2 = 'Insight/insightface/recognition/arcface_torch/r50_features'
 # Download CIFAR10 data set into ./data directory
 # Datasets
-pkl_dataset = pklDataset.PklDataset(pkl_path, infer_classes_and_n_records=True)
+pkl_dataset = pklDataset.PklEmbeddingsDataset(pkl_path1,pkl_path2)
 # train_set = torchvision.datasets.CIFAR10(root=data_directory, train=True, download=True, transform=train_transform)
 
 # TODO enable also shuffle
@@ -315,8 +316,8 @@ pkl_dataset = pklDataset.PklDataset(pkl_path, infer_classes_and_n_records=True)
 loss_fn = torch.nn.CosineSimilarity()
 #optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 fit_res = DeepLearning.experiments.cnn_experiment(run_name="rs50_features", ds_train=pkl_dataset, ds_test=pkl_dataset,
-                                                  bs_train=64, bs_test=64, optimizer="identity",
-                                                  batches=1000, epochs=100, early_stopping=20,
+                                                  bs_train=batch_size, bs_test=batch_size, optimizer=None,
+                                                  batches=1000, epochs=100, early_stopping=5,
                                                   filters_per_layer=[64, 128, 256],
                                                   layers_per_block=0, pool_every=4, hidden_dims=[],
                                                   lr=0.001, loss_fn=loss_fn,

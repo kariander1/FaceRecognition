@@ -128,18 +128,8 @@ def cnn_experiment(
     if model_type not in MODEL_TYPES:
         raise ValueError(f"Unknown model type: {model_type}")
     model_cls = MODEL_TYPES[model_type]
-
-    # TODO: Train
-    #  - Create model, loss, optimizer and trainer based on the parameters.
-    #    Use the model you've implemented previously, cross entropy loss and
-    #    any optimizer that you wish.
-    #  - Run training and save the FitResults in the fit_res variable.
-    #  - The fit results and all the experiment parameters will then be saved
-    #   for you automatically.
     fit_res = None
-    # ====== YOUR CODE: ======
-    # Create data loaders
-    import numpy
+
     dl_train = torch.utils.data.DataLoader(ds_train, bs_train, shuffle=True)
     dl_test = torch.utils.data.DataLoader(ds_test, bs_test, shuffle=True)
 
@@ -149,18 +139,20 @@ def cnn_experiment(
 
     in_size = []
     in_size += images[0].shape
+    out_size = in_size[0]
     while len(in_size) < 3:
         in_size+=[1]
 
     channels = [layer for layer in filters_per_layer for i in range(layers_per_block)]
 
-    model = model_cls(in_size=in_size, out_classes=len(ds_train.classes),
+    # model = model_cls(in_size=in_size, out_classes=len(ds_train.classes),
+    #                   channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
+    #                   **kw)
+    model = model_cls(in_size=in_size, out_classes=out_size,
                       channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
                       **kw)
-    model = model.to(device)
+    #model = model.to(device)
     print(model)
-    if loss_fn is None:
-        loss_fn = torch.nn.CrossEntropyLoss()
     if optimizer is "identity":
         optimizer = None
     elif optimizer is None:
@@ -170,7 +162,7 @@ def cnn_experiment(
     trainer = ClassifierTrainer(model, loss_fn, optimizer, device)
     fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test, num_epochs=epochs, checkpoints=checkpoints,
                           early_stopping=early_stopping, print_every=1, **{'max_batches': batches})
-    # ========================
+
 
     # save_experiment(run_name, out_dir, cfg, fit_res)
     return fit_res

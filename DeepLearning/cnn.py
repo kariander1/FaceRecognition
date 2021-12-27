@@ -71,15 +71,7 @@ class CNN(nn.Module):
         in_channels, in_h, in_w, = tuple(self.in_size)
 
         layers = []
-        # TODO: Create the feature extractor part of the model:
-        #  [(CONV -> ACT)*P -> POOL]*(N/P)
-        #  Apply activation function after each conv, using the activation type and
-        #  parameters.
-        #  Apply pooling to reduce dimensions after every P convolutions, using the
-        #  pooling type and pooling parameters.
-        #  Note: If N is not divisible by P, then N mod P additional
-        #  CONV->ACTs should exist at the end, without a POOL after them.
-        # ====== YOUR CODE: ======
+
         act = ACTIVATIONS[self.activation_type](**self.activation_params)
 
         pool = POOLINGS[self.pooling_type](**self.pooling_params)
@@ -132,28 +124,23 @@ class CNN(nn.Module):
 
     def _make_mlp(self):
         mlp: MLP = None
-        # ====== YOUR CODE: ======
-        #activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims) + ['none']
-        # TODO currently overriding out_classes
-        activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims)
-        hidden_dims = self.hidden_dims
-        #hidden_dims = self.hidden_dims + [self.out_classes]
+
+        activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims) + ['none']
+        hidden_dims = self.hidden_dims + [self.out_classes]
 
         in_dim = self._n_features()
         mlp = MLP(in_dim=in_dim, dims=hidden_dims, nonlins=activations)
-        # ========================
+
         return mlp
 
     def forward(self, x: Tensor):
-        # TODO: Implement the forward pass.
-        #  Extract features from the input, run the classifier on them and
-        #  return class scores.
+
         out: Tensor = None
-        # ====== YOUR CODE: ======
+
         x = self.feature_extractor(x)
         x = torch.flatten(x, 1)
         out = self.mlp(x)
-        # ========================
+
         return out
 
 

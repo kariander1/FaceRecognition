@@ -25,7 +25,7 @@ class Trainer(abc.ABC):
     """
 
     def __init__(
-        self, model: nn.Module, device: Optional[torch.device] = None,
+            self, model: nn.Module, device: Optional[torch.device] = None,
     ):
         """
         Initialize the trainer.
@@ -35,18 +35,18 @@ class Trainer(abc.ABC):
         self.model = model
         self.device = device
 
-        if self.device:
-            model.to(self.device)
+        #if self.device:
+            #model.to(self.device)
 
     def fit(
-        self,
-        dl_train: DataLoader,
-        dl_test: DataLoader,
-        num_epochs: int,
-        checkpoints: str = None,
-        early_stopping: int = None,
-        print_every: int = 1,
-        **kw,
+            self,
+            dl_train: DataLoader,
+            dl_test: DataLoader,
+            num_epochs: int,
+            checkpoints: str = None,
+            early_stopping: int = None,
+            print_every: int = 1,
+            **kw,
     ) -> FitResult:
         """
         Trains the model for multiple epochs with a given training set,
@@ -72,10 +72,10 @@ class Trainer(abc.ABC):
         for epoch in range(num_epochs):
             verbose = False  # pass this to train/test_epoch.
             if print_every > 0 and (
-                epoch % print_every == 0 or epoch == num_epochs - 1
+                    epoch % print_every == 0 or epoch == num_epochs - 1
             ):
                 verbose = True
-            self._print(f"--- EPOCH {epoch+1}/{num_epochs} ---", verbose)
+            self._print(f"--- EPOCH {epoch + 1}/{num_epochs} ---", verbose)
 
             # TODO: Train & evaluate for one epoch
             #  - Use the train/test_epoch methods.
@@ -83,37 +83,29 @@ class Trainer(abc.ABC):
             # ====== YOUR CODE: ======
             actual_num_epochs += 1
             train_losses, train_accuracy = self.train_epoch(dl_train, verbose=verbose, **kw)
-            train_acc.append(train_accuracy.item())
+            train_acc.append(train_accuracy)
             train_loss.append(sum(train_losses) / len(train_losses))
 
             test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_accuracy = test_result.accuracy
             test_losses = test_result.losses
-            test_acc.append(test_accuracy.item())
+            test_acc.append(test_accuracy)
             test_loss.append(sum(test_losses) / len(test_losses))
-            # ========================
 
-            # TODO:
-            #  - Optional: Implement early stopping. This is a very useful and
-            #    simple regularization technique that is highly recommended.
-            #  - Optional: Implement checkpoints. You can use the save_checkpoint
-            #    method on this class to save the model to the file specified by
-            #    the checkpoints argument.
             if best_acc is None or test_result.accuracy > best_acc:
-                # ====== YOUR CODE: ======
+
                 # There is improvement
                 epochs_without_improvement = 0
                 if checkpoints:
                     self.save_checkpoint(checkpoints)
                 best_acc = test_accuracy
-                # ========================
+
             else:
-                # ====== YOUR CODE: ======
+
                 # No improvement
                 epochs_without_improvement += 1
                 if early_stopping and epochs_without_improvement is early_stopping:
                     break
-                # ========================
 
         return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
 
@@ -179,10 +171,10 @@ class Trainer(abc.ABC):
 
     @staticmethod
     def _foreach_batch(
-        dl: DataLoader,
-        forward_fn: Callable[[Any], BatchResult],
-        verbose=True,
-        max_batches=None,
+            dl: DataLoader,
+            forward_fn: Callable[[Any], BatchResult],
+            verbose=True,
+            max_batches=None,
     ) -> EpochResult:
         """
         Evaluates the given forward-function on batches from the given
@@ -238,11 +230,11 @@ class ClassifierTrainer(Trainer):
     """
 
     def __init__(
-        self,
-        model: Classifier,
-        loss_fn: nn.Module,
-        optimizer: Optimizer,
-        device: Optional[torch.device] = None,
+            self,
+            model: Classifier,
+            loss_fn: nn.Module,
+            optimizer: Optimizer,
+            device: Optional[torch.device] = None,
     ):
         """
         Initialize the trainer.
@@ -257,57 +249,58 @@ class ClassifierTrainer(Trainer):
 
     def train_batch(self, batch) -> BatchResult:
         X, y = batch
-        if self.device:
-            X = X.to(self.device)
-            y = y.to(self.device)
+        # if self.device:
+        #     X = X.to(self.device)
+        #     y = y.to(self.device)
 
         self.model: Classifier
         batch_loss: float
         num_correct: int
 
-
         # Forward Pass
         y_hat = self.model(X)
-        loss = self.loss_fn(y_hat, X)
-        batch_loss = loss.item()
+        loss = self.loss_fn(y_hat, y)  # Y is GT of embedding vector
+        if type(self.loss_fn) is nn.CosineSimilarity:
+            loss = 1 - loss
+        batch_loss = torch.mean(loss)
 
         # Backward-pass + Update parameters
+        # TODO: Fix optimizer
         if self.optimizer:
             self.optimizer.zero_grad()
-        loss.backward()
-        if self.optimizer:
+            batch_loss.backward()
+
             self.optimizer.step()
 
         # Num of correct
-        _, y_indices = torch.max(y_hat, dim=1)
-        num_correct = (y_indices == y).sum()
+        # _, y_indices = torch.max(y_hat, dim=1)
+        # num_correct = (y_indices == y).sum()
+        num_correct = (1 - batch_loss) * y.shape[0]
         # ========================
 
         return BatchResult(batch_loss, num_correct)
 
     def test_batch(self, batch) -> BatchResult:
         X, y = batch
-        if self.device:
-            X = X.to(self.device)
-            y = y.to(self.device)
+        # if self.device:
+        #     X = X.to(self.device)
+        #     y = y.to(self.device)
 
         self.model: Classifier
         batch_loss: float
         num_correct: int
 
         with torch.no_grad():
-            # TODO: Evaluate the model on one batch of data.
-            #  - Forward pass
-            #  - Calculate number of correct predictions
-            # ====== YOUR CODE: ======
             # Forward Pass
             y_hat = self.model(X)
-            loss = self.loss_fn(y_hat, y)
-            batch_loss = loss.item()
+            loss = self.loss_fn(y_hat, y)  # Y is GT of embedding vector
+            if type(self.loss_fn) is nn.CosineSimilarity:
+                loss = 1 - (loss + 1) / 2
+            batch_loss = torch.mean(loss).item()
 
             # Num of correct
-            _, y_indices = torch.max(y_hat, dim=1)
-            num_correct = (y_indices == y).sum()
-            # ========================
+            # _, y_indices = torch.max(y_hat, dim=1)
+            # num_correct = (y_indices == y).sum()
+            num_correct = (1 - batch_loss) * y.shape[0]
 
         return BatchResult(batch_loss, num_correct)
