@@ -91,7 +91,8 @@ def cnn_experiment(
     checkpoints=None,
     lr=1e-3,
     reg=1e-3,
-    loss_fn=None,
+    loss_fns=None,
+    loss_weights=None,
     optimizer=None,
     # Model params
     filters_per_layer=[64],
@@ -151,7 +152,7 @@ def cnn_experiment(
     model = model_cls(in_size=in_size, out_classes=out_size,
                       channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
                       **kw)
-    #model = model.to(device)
+    model = model.to(device)
     print(model)
     if optimizer is "identity":
         optimizer = None
@@ -159,7 +160,7 @@ def cnn_experiment(
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
 
-    trainer = ClassifierTrainer(model, loss_fn, optimizer, device)
+    trainer = ClassifierTrainer(model, loss_fns,loss_weights, optimizer, device)
     fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test, num_epochs=epochs, checkpoints=checkpoints,
                           early_stopping=early_stopping, print_every=1, **{'max_batches': batches})
 

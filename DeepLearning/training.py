@@ -8,6 +8,7 @@ from torch import Tensor
 from typing import Any, Tuple, Callable, Optional, cast
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from typing import Sequence
 
 from .train_results import FitResult, BatchResult, EpochResult
 
@@ -35,8 +36,8 @@ class Trainer(abc.ABC):
         self.model = model
         self.device = device
 
-        #if self.device:
-            #model.to(self.device)
+        if self.device:
+            model.to(self.device)
 
     def fit(
             self,
@@ -77,10 +78,6 @@ class Trainer(abc.ABC):
                 verbose = True
             self._print(f"--- EPOCH {epoch + 1}/{num_epochs} ---", verbose)
 
-            # TODO: Train & evaluate for one epoch
-            #  - Use the train/test_epoch methods.
-            #  - Save losses and accuracies in the lists above.
-            # ====== YOUR CODE: ======
             actual_num_epochs += 1
             train_losses, train_accuracy = self.train_epoch(dl_train, verbose=verbose, **kw)
             train_acc.append(train_accuracy)
@@ -232,59 +229,65 @@ class ClassifierTrainer(Trainer):
     def __init__(
             self,
             model: Classifier,
-            loss_fn: nn.Module,
+            loss_fns: Sequence[nn.Module],
+            loss_weights: Sequence[nn.Module],
             optimizer: Optimizer,
             device: Optional[torch.device] = None,
     ):
         """
         Initialize the trainer.
         :param model: Instance of the classifier model to train.
-        :param loss_fn: The loss function to evaluate with.
+        :param loss_fns: The loss function to evaluate with.
         :param optimizer: The optimizer to train with.
         :param device: torch.device to run training on (CPU or GPU).
         """
+        assert len(loss_fns) == len(loss_weights)
         super().__init__(model, device)
         self.optimizer = optimizer
-        self.loss_fn = loss_fn
+        self.loss_fns = loss_fns
+        self.loss_weights = loss_weights
+
+    def forward_pass(self, X, y):
+
+        # Forward Pass
+        batch_loss = None
+        y_hat = self.model(X)
+        for loss_fn, loss_weight in zip(self.loss_fns, self.loss_weights):
+            loss = loss_fn(y_hat, y)  # Y is GT of embedding vector
+            if type(loss_fn) is nn.CosineSimilarity:
+                loss = torch.mean(1 - loss)
+            weighted_loss = loss_weight * loss
+            batch_loss = batch_loss + weighted_loss if batch_loss is not None else weighted_loss
+        num_correct = torch.abs((1 - batch_loss) * y.shape[0])
+        return batch_loss, num_correct
 
     def train_batch(self, batch) -> BatchResult:
         X, y = batch
-        # if self.device:
-        #     X = X.to(self.device)
-        #     y = y.to(self.device)
+        if self.device:
+            X = X.to(self.device)
+            y = y.to(self.device)
 
         self.model: Classifier
         batch_loss: float
         num_correct: int
 
         # Forward Pass
-        y_hat = self.model(X)
-        loss = self.loss_fn(y_hat, y)  # Y is GT of embedding vector
-        if type(self.loss_fn) is nn.CosineSimilarity:
-            loss = 1 - loss
-        batch_loss = torch.mean(loss)
+        batch_loss, num_correct = self.forward_pass(X, y)
 
         # Backward-pass + Update parameters
-        # TODO: Fix optimizer
+
         if self.optimizer:
             self.optimizer.zero_grad()
             batch_loss.backward()
-
             self.optimizer.step()
 
-        # Num of correct
-        # _, y_indices = torch.max(y_hat, dim=1)
-        # num_correct = (y_indices == y).sum()
-        num_correct = (1 - batch_loss) * y.shape[0]
-        # ========================
-
-        return BatchResult(batch_loss, num_correct)
+        return BatchResult(batch_loss.item(), num_correct.item())
 
     def test_batch(self, batch) -> BatchResult:
         X, y = batch
-        # if self.device:
-        #     X = X.to(self.device)
-        #     y = y.to(self.device)
+        if self.device:
+            X = X.to(self.device)
+            y = y.to(self.device)
 
         self.model: Classifier
         batch_loss: float
@@ -292,15 +295,6 @@ class ClassifierTrainer(Trainer):
 
         with torch.no_grad():
             # Forward Pass
-            y_hat = self.model(X)
-            loss = self.loss_fn(y_hat, y)  # Y is GT of embedding vector
-            if type(self.loss_fn) is nn.CosineSimilarity:
-                loss = 1 - (loss + 1) / 2
-            batch_loss = torch.mean(loss).item()
+            batch_loss, num_correct = self.forward_pass(X, y)
 
-            # Num of correct
-            # _, y_indices = torch.max(y_hat, dim=1)
-            # num_correct = (y_indices == y).sum()
-            num_correct = (1 - batch_loss) * y.shape[0]
-
-        return BatchResult(batch_loss, num_correct)
+        return BatchResult(batch_loss.item(), num_correct.item())
