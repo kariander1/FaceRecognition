@@ -65,7 +65,8 @@ class CNN(nn.Module):
             raise ValueError("Unsupported activation or pooling type")
 
         self.feature_extractor = self._make_feature_extractor()
-        self.mlp = self._make_mlp()
+        self.features_fc = self._make_mlp(in_size[0])
+        self.label_classifier = self._make_mlp(self.out_classes,in_dim=in_size[0])
 
     def _make_feature_extractor(self):
         in_channels, in_h, in_w, = tuple(self.in_size)
@@ -122,13 +123,13 @@ class CNN(nn.Module):
         finally:
             torch.set_rng_state(rng_state)
 
-    def _make_mlp(self):
+    def _make_mlp(self, out_dim, in_dim=None):
         mlp: MLP = None
 
         activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims) + ['none']
-        hidden_dims = self.hidden_dims + [self.out_classes]
-
-        in_dim = self._n_features()
+        hidden_dims = self.hidden_dims + [out_dim]
+        if in_dim is None:
+            in_dim = self._n_features()
         mlp = MLP(in_dim=in_dim, dims=hidden_dims, nonlins=activations)
 
         return mlp
@@ -136,12 +137,13 @@ class CNN(nn.Module):
     def forward(self, x: Tensor):
 
         out: Tensor = None
-
+        x = torch.unsqueeze(torch.unsqueeze(x,2),3)
         x = self.feature_extractor(x)
         x = torch.flatten(x, 1)
-        out = self.mlp(x)
+        x = self.features_fc(x)
+        out = self.label_classifier(x)
 
-        return out
+        return x,out
 
 
 class ResidualBlock(nn.Module):

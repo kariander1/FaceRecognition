@@ -7,6 +7,7 @@ import argparse
 import itertools
 import torchvision
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from torchvision.datasets import CIFAR10
 
 from .train_results import FitResult
@@ -91,8 +92,10 @@ def cnn_experiment(
     checkpoints=None,
     lr=1e-3,
     reg=1e-3,
-    loss_fns=None,
-    loss_weights=None,
+    features_loss_fns=None,
+    features_loss_weights=None,
+    label_loss_fns=None,
+    label_loss_weights=None,
     optimizer=None,
     # Model params
     filters_per_layer=[64],
@@ -136,31 +139,32 @@ def cnn_experiment(
 
     # get some random training images
     data_iter = iter(dl_train)
-    images, labels = data_iter.next()
+    features1,_, _ = data_iter.next()
 
     in_size = []
-    in_size += images[0].shape
+    in_size += features1[0].shape
     out_size = in_size[0]
     while len(in_size) < 3:
         in_size+=[1]
 
     channels = [layer for layer in filters_per_layer for i in range(layers_per_block)]
 
-    # model = model_cls(in_size=in_size, out_classes=len(ds_train.classes),
-    #                   channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
-    #                   **kw)
-    model = model_cls(in_size=in_size, out_classes=out_size,
+    model = model_cls(in_size=in_size, out_classes=len(ds_train.classes),
                       channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
                       **kw)
+    # Writer will output to ./runs/ directory by default
+    writer = SummaryWriter()
+    writer.add_graph(model, features1)
     model = model.to(device)
     print(model)
+
     if optimizer is "identity":
         optimizer = None
     elif optimizer is None:
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
-
-    trainer = ClassifierTrainer(model, loss_fns,loss_weights, optimizer, device)
+    trainer = ClassifierTrainer(model, features_loss_fns, features_loss_weights, label_loss_fns, label_loss_weights,
+                                optimizer, device)
     fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test, num_epochs=epochs, checkpoints=checkpoints,
                           early_stopping=early_stopping, print_every=1, **{'max_batches': batches})
 

@@ -27,10 +27,11 @@ class PklEmbeddingsDataset(Dataset):
         self.classes = self.ds2.classes
 
     def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
-        image1, label1 = self.ds1[index]
-        image2, label2 = self.ds2[index]
+        idx1,image1, label1 = self.ds1[index]
+        idx2,image2, label2 = self.ds2[index]
+        assert idx1 == idx2
         assert label1 == label2
-        return image1, image2
+        return image1, image2, label1
         # return next(self.iterator)
 
     def __len__(self):
@@ -84,9 +85,10 @@ class PklDataset(Dataset):
         # self.files[i_batch] = open(batch_path, 'rb')
         f = open(batch_path, 'rb')
         batch = pickle.load(f)
-        label = int(batch[offset, 0].item())
-        image = batch[offset, 1:]
-        return image, label
+        idx = int(batch[offset, 0].item())
+        label = int(batch[offset, 1].item())
+        image = batch[offset, 2:]
+        return idx, image, label
         # return next(self.iterator)
 
     def _get_image(self) -> Tuple[Tensor, int]:

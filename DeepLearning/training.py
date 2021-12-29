@@ -9,7 +9,7 @@ from typing import Any, Tuple, Callable, Optional, cast
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from typing import Sequence
-
+from torch.utils.tensorboard import SummaryWriter
 from .train_results import FitResult, BatchResult, EpochResult
 
 from .classifier import Classifier
@@ -63,13 +63,16 @@ class Trainer(abc.ABC):
         :param print_every: Print progress every this number of epochs.
         :return: A FitResult object containing train and test losses per epoch.
         """
+        # Writer will output to ./runs/ directory by default
+        writer = SummaryWriter()
+
 
         actual_num_epochs = 0
         epochs_without_improvement = 0
 
         train_loss, train_acc, test_loss, test_acc = [], [], [], []
         best_acc = None
-
+        best_loss = None
         for epoch in range(num_epochs):
             verbose = False  # pass this to train/test_epoch.
             if print_every > 0 and (
@@ -81,24 +84,41 @@ class Trainer(abc.ABC):
             actual_num_epochs += 1
             train_losses, train_accuracy = self.train_epoch(dl_train, verbose=verbose, **kw)
             train_acc.append(train_accuracy)
-            train_loss.append(sum(train_losses) / len(train_losses))
+            batch_train_loss = sum(train_losses) / len(train_losses)
+            train_loss.append(batch_train_loss)
 
             test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_accuracy = test_result.accuracy
             test_losses = test_result.losses
             test_acc.append(test_accuracy)
-            test_loss.append(sum(test_losses) / len(test_losses))
+            batch_test_loss = sum(test_losses) / len(test_losses)
+            test_loss.append(batch_test_loss)
 
-            if best_acc is None or test_result.accuracy > best_acc:
+            # ...log the running loss
+            writer.add_scalars(f'./Loss/',
+                              {
+                                  'Training Loss': batch_train_loss,
+                                  'Test Loss': batch_test_loss
+                              },
+                              epoch)
+            # ...log the running loss
+            writer.add_scalars(f'./Accuracy/',
+                              {
+                                  'Training Accuracy': train_accuracy,
+                                  'Test Accuracy': test_accuracy
+                              },
+                              epoch)
+
+
+            if best_loss is None or batch_test_loss < best_loss:
 
                 # There is improvement
                 epochs_without_improvement = 0
                 if checkpoints:
                     self.save_checkpoint(checkpoints)
-                best_acc = test_accuracy
+                best_loss = batch_test_loss
 
             else:
-
                 # No improvement
                 epochs_without_improvement += 1
                 if early_stopping and epochs_without_improvement is early_stopping:
@@ -229,8 +249,10 @@ class ClassifierTrainer(Trainer):
     def __init__(
             self,
             model: Classifier,
-            loss_fns: Sequence[nn.Module],
-            loss_weights: Sequence[nn.Module],
+            features_loss_fns: Sequence[nn.Module],
+            features_loss_weights: Sequence[nn.Module],
+            label_loss_fns: Sequence[nn.Module],
+            label_loss_weights: Sequence[nn.Module],
             optimizer: Optimizer,
             device: Optional[torch.device] = None,
     ):
@@ -241,30 +263,46 @@ class ClassifierTrainer(Trainer):
         :param optimizer: The optimizer to train with.
         :param device: torch.device to run training on (CPU or GPU).
         """
-        assert len(loss_fns) == len(loss_weights)
+        assert len(features_loss_fns) == len(features_loss_weights)
+        assert len(label_loss_fns) == len(label_loss_weights)
         super().__init__(model, device)
         self.optimizer = optimizer
-        self.loss_fns = loss_fns
-        self.loss_weights = loss_weights
+        self.features_loss_fns = features_loss_fns
+        self.features_loss_weights = features_loss_weights
+        self.label_loss_fns = label_loss_fns
+        self.label_loss_weights = label_loss_weights
 
-    def forward_pass(self, X, y):
-
-        # Forward Pass
+    def calc_loss(self, input, ground_truth, loss_fcs, loss_weights):
         batch_loss = None
-        y_hat = self.model(X)
-        for loss_fn, loss_weight in zip(self.loss_fns, self.loss_weights):
-            loss = loss_fn(y_hat, y)  # Y is GT of embedding vector
+        for loss_fn, loss_weight in zip(loss_fcs, loss_weights):
+            loss = loss_fn(input, ground_truth)  # Y is GT of embedding vector
             if type(loss_fn) is nn.CosineSimilarity:
-                loss = torch.mean(1 - loss)
+                # TODO : change to torch.sum (TBD)
+                loss = torch.sum(1 - loss)
             weighted_loss = loss_weight * loss
             batch_loss = batch_loss + weighted_loss if batch_loss is not None else weighted_loss
-        num_correct = torch.abs((1 - batch_loss) * y.shape[0])
+        return batch_loss
+
+    def forward_pass(self, X1, X2, y):
+
+        # Forward Pass
+        transformed_features, y_hat = self.model(X1)
+        feature_loss = self.calc_loss(input=transformed_features, ground_truth=X2, loss_fcs=self.features_loss_fns,
+                                      loss_weights=self.features_loss_weights)
+        label_loss = self.calc_loss(input=y_hat, ground_truth=y, loss_fcs=self.label_loss_fns,
+                                    loss_weights=self.label_loss_weights)
+        batch_loss = feature_loss + label_loss
+        _, y_indices = torch.max(y_hat, dim=1)
+        # TODO : Complete calculation, works if using cosine loss only
+        #num_correct = torch.abs((1 - batch_loss) * y.shape[0])
+        num_correct = (y_indices == y).sum()
         return batch_loss, num_correct
 
     def train_batch(self, batch) -> BatchResult:
-        X, y = batch
+        X1,X2, y = batch
         if self.device:
-            X = X.to(self.device)
+            X1 = X1.to(self.device)
+            X2 = X2.to(self.device)
             y = y.to(self.device)
 
         self.model: Classifier
@@ -272,7 +310,7 @@ class ClassifierTrainer(Trainer):
         num_correct: int
 
         # Forward Pass
-        batch_loss, num_correct = self.forward_pass(X, y)
+        batch_loss, num_correct = self.forward_pass(X1,X2, y)
 
         # Backward-pass + Update parameters
 
@@ -284,9 +322,10 @@ class ClassifierTrainer(Trainer):
         return BatchResult(batch_loss.item(), num_correct.item())
 
     def test_batch(self, batch) -> BatchResult:
-        X, y = batch
+        X1, X2, y = batch
         if self.device:
-            X = X.to(self.device)
+            X1 = X1.to(self.device)
+            X2 = X2.to(self.device)
             y = y.to(self.device)
 
         self.model: Classifier
@@ -295,6 +334,6 @@ class ClassifierTrainer(Trainer):
 
         with torch.no_grad():
             # Forward Pass
-            batch_loss, num_correct = self.forward_pass(X, y)
+            batch_loss, num_correct = self.forward_pass(X1,X2, y)
 
         return BatchResult(batch_loss.item(), num_correct.item())
