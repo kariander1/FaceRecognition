@@ -27,8 +27,8 @@ class PklEmbeddingsDataset(Dataset):
         self.classes = self.ds2.classes
 
     def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
-        idx1,image1, label1 = self.ds1[index]
-        idx2,image2, label2 = self.ds2[index]
+        image1, label1, idx1 = self.ds1[index]
+        image2, label2, idx2 = self.ds2[index]
         assert idx1 == idx2
         assert label1 == label2
         return image1, image2, label1
@@ -54,7 +54,7 @@ class PklDataset(Dataset):
 
         """
         super().__init__()
-        print("Loading dataframe..")
+        print("Loading pkl dataset: "+pkl_dir_path )
         self.pkl_dir_path = pkl_dir_path
         with open(os.path.join(pkl_dir_path, 'metadata.pkl'), 'rb') as pkl_metadata:
             metadata_dict = pickle.load(pkl_metadata)
@@ -77,7 +77,7 @@ class PklDataset(Dataset):
         self.n_records = n_records
         self.classes = [int(item) for item in labels_set]
 
-    def __getitem__(self, index: int) -> Tuple[Tensor, int]:
+    def __getitem__(self, index: int) -> Tuple[Tensor, int,int]:
         i_batch = index // self.dataset_batch_size
         offset = index % self.dataset_batch_size
         batch_path = os.path.join(self.pkl_dir_path, str(i_batch) + '.pkl')
@@ -88,7 +88,7 @@ class PklDataset(Dataset):
         idx = int(batch[offset, 0].item())
         label = int(batch[offset, 1].item())
         image = batch[offset, 2:]
-        return idx, image, label
+        return image, label,idx
         # return next(self.iterator)
 
     def _get_image(self) -> Tuple[Tensor, int]:

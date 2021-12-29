@@ -121,7 +121,7 @@ label_loss_weights = [0]
 # optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 fit_res = DeepLearning.experiments.cnn_experiment(run_name="rs50_features", ds_train=pkl_dataset, ds_test=pkl_dataset,
                                                   bs_train=batch_size, bs_test=batch_size, optimizer=None,
-                                                  batches=10, epochs=200, early_stopping=5,
+                                                  epochs=200, early_stopping=5,
                                                   filters_per_layer=[64, 128, 512],
                                                   layers_per_block=0, pool_every=4, hidden_dims=[],
                                                   lr=0.001, features_loss_fns=features_loss_fns,
