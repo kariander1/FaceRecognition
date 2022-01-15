@@ -228,11 +228,11 @@ class Trainer(abc.ABC):
                 num_correct += batch_res.num_correct
 
             avg_loss = sum(losses) / num_batches
-            accuracy = 100.0 * num_correct / num_samples
+            accuracy = 100 - 100.0 * (avg_loss/2)
             pbar.set_description(
                 f"{pbar_name} "
                 f"(Avg. Loss {avg_loss:.3f}, "
-                f"Accuracy {accuracy:.1f})"
+                f"Accuracy {accuracy:.3f})"
             )
 
         if not verbose:
@@ -277,8 +277,7 @@ class ClassifierTrainer(Trainer):
         for loss_fn, loss_weight in zip(loss_fcs, loss_weights):
             loss = loss_fn(input, ground_truth)  # Y is GT of embedding vector
             if type(loss_fn) is nn.CosineSimilarity:
-                # TODO : change to torch.sum (TBD)
-                loss = torch.sum(1 - loss)
+                loss = torch.mean(1 - loss)
             weighted_loss = loss_weight * loss
             batch_loss = batch_loss + weighted_loss if batch_loss is not None else weighted_loss
         return batch_loss
@@ -286,12 +285,16 @@ class ClassifierTrainer(Trainer):
     def forward_pass(self, X1, X2, y):
 
         # Forward Pass
+
         transformed_features, y_hat = self.model(X1)
+        y_hat = y_hat.to(self.device)
         feature_loss = self.calc_loss(input=transformed_features, ground_truth=X2, loss_fcs=self.features_loss_fns,
                                       loss_weights=self.features_loss_weights)
         label_loss = self.calc_loss(input=y_hat, ground_truth=y, loss_fcs=self.label_loss_fns,
                                     loss_weights=self.label_loss_weights)
-        batch_loss = feature_loss + label_loss
+        batch_loss = feature_loss
+        if label_loss is not None:
+            batch_loss += + label_loss
         _, y_indices = torch.max(y_hat, dim=1)
         # TODO : Complete calculation, works if using cosine loss only
         #num_correct = torch.abs((1 - batch_loss) * y.shape[0])

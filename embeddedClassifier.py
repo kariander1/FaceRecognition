@@ -1,6 +1,6 @@
 import csv
 import os.path
-
+import DeepLearning.MSResnet
 import DeepLearning.experiments
 import pklDataset
 import matplotlib.pyplot as plt
@@ -73,7 +73,7 @@ def count_parameters(model):
 
 fields = {}
 csv_name = r'accuracy_chart.csv'
-batch_size = 64
+batch_size = 256
 filter_size = 3
 epochs = 60
 dropout_rate = 0.05
@@ -105,21 +105,22 @@ fields['Number of FC'] = num_of_fc
 data_directory = './data'
 pkl_path1 = 'Insight/insightface/recognition/arcface_torch/r18_features'
 pkl_path2 = 'Insight/insightface/recognition/arcface_torch/r50_features'
-# Download CIFAR10 data set into ./data directory
+
 # Datasets
 pkl_dataset = pklDataset.PklEmbeddingsDataset(pkl_path1,pkl_path2)
-# train_set = torchvision.datasets.CIFAR10(root=data_directory, train=True, download=True, transform=train_transform)
-
-# TODO enable also shuffle
-# pkl_loader = torch.utils.data.DataLoader(pkl_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+train_set, val_set, test_set = pklDataset.SplitDataset(pkl_dataset,n_labels=40000 ,val_ratio=0.1, test_ratio=0.1)
 
 features_loss_fns = [torch.nn.CosineSimilarity(), torch.nn.MSELoss()]
 features_loss_weights = [1,0]
-label_loss_fns = [torch.nn.CrossEntropyLoss()]
-label_loss_weights = [0]
+label_loss_fns = []
+label_loss_weights = []
 
 # optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
-fit_res = DeepLearning.experiments.cnn_experiment(run_name="rs50_features", ds_train=pkl_dataset, ds_test=pkl_dataset,
+
+msresnet = DeepLearning.MSResnet.MSResNet(input_channel=1, layers=[1, 1, 1, 1],num_classes=len(pkl_dataset.ds1.classes),embedding_size=512)
+
+fit_res = DeepLearning.experiments.cnn_experiment(model=msresnet, run_name="rs50_features", ds_train=train_set,
+                                                  ds_test=val_set,
                                                   bs_train=batch_size, bs_test=batch_size, optimizer=None,
                                                   epochs=200, early_stopping=5,
                                                   filters_per_layer=[64, 128, 512],
@@ -128,6 +129,6 @@ fit_res = DeepLearning.experiments.cnn_experiment(run_name="rs50_features", ds_t
                                                   features_loss_weights=features_loss_weights,
                                                   label_loss_fns=label_loss_fns,
                                                   label_loss_weights=label_loss_weights,
-                                                  model_type="cnn")
+                                                  model_type="cnn",batches=None)
 
 print("Finished")

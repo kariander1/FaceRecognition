@@ -1,5 +1,8 @@
+import math
 import os
+import random
 
+import copy
 import torch
 import pickle
 from torch import Tensor
@@ -7,6 +10,55 @@ from typing import Tuple, Iterator
 from contextlib import contextmanager
 from torch.utils.data import Dataset, IterableDataset
 import pandas as pd
+
+
+def SplitDataset(full_dataset, n_labels,val_ratio=0.1, test_ratio=0.1):
+    dataset_size = len(full_dataset)
+    label_train = n_labels*(1-val_ratio-test_ratio)
+    label_val = n_labels * (1 - val_ratio)
+    label_test = n_labels
+    batch_size = full_dataset.ds1.dataset_batch_size
+
+    train_dataset =copy.deepcopy(full_dataset)
+    train_dataset.n_records = 14031*batch_size
+
+    val_dataset = copy.deepcopy(full_dataset)
+    val_dataset.n_records = (15789-14032) * batch_size
+    val_dataset.ds1.batch_offset = 14032
+    val_dataset.ds2.batch_offset = 14032
+
+    test_dataset = copy.deepcopy(full_dataset)
+    test_dataset.n_records = (17481 - 15790) * batch_size
+    test_dataset.ds1.batch_offset = 15780
+    test_dataset.ds2.batch_offset = 15780
+
+    return train_dataset,val_dataset,test_dataset
+
+    # n_batches = dataset_size//full_dataset.ds1.dataset_batch_size
+    # i = 15790*full_dataset.ds1.dataset_batch_size
+    # for i_batch in range(15790,n_batches):
+    #     _,_,label = full_dataset[i]
+    #     if label>=label_test:
+    #         break
+    #     i += full_dataset.ds1.dataset_batch_size
+
+#
+#
+# def SplitDataset(full_dataset, val_ratio=0.1, test_ratio=0.1):
+#     dataset_size = len(full_dataset)
+#     indices = list(range(dataset_size))
+#
+#     random.shuffle(indices)
+#     val_percent = int(math.floor(val_ratio * dataset_size))
+#     test_percent = int(math.floor(test_ratio * dataset_size))
+#     train_indices, val_indices, test_indices = indices[val_percent + test_percent:], \
+#                                                indices[test_percent:val_percent + test_percent], \
+#                                                indices[:test_percent]
+#     new_lengths = [dataset_size - (val_percent + test_percent), val_percent, test_percent]
+#     new_datasets = [full_dataset[train_indices], full_dataset[val_indices], full_dataset[test_indices]]
+#     for i_dataset, dataset in enumerate(new_datasets):
+#         dataset.n_records = new_lengths[i_dataset]
+#     return
 
 
 class PklEmbeddingsDataset(Dataset):
@@ -62,6 +114,7 @@ class PklDataset(Dataset):
             self.classes = metadata_dict["classes"]
             self.dataset_batch_size = metadata_dict["batch_size"]
         self.files = [None] * (self.n_records // self.dataset_batch_size)
+        self.batch_offset = 0;
         if infer_classes_and_n_records:
             self._infer_classes_and_n_records()
         # self.iterator = self._get_image()
@@ -78,7 +131,7 @@ class PklDataset(Dataset):
         self.classes = [int(item) for item in labels_set]
 
     def __getitem__(self, index: int) -> Tuple[Tensor, int,int]:
-        i_batch = index // self.dataset_batch_size
+        i_batch = self.batch_offset + index // self.dataset_batch_size
         offset = index % self.dataset_batch_size
         batch_path = os.path.join(self.pkl_dir_path, str(i_batch) + '.pkl')
         # if self.files[i_batch] is None:

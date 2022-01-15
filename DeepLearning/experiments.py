@@ -77,6 +77,7 @@ def mlp_experiment(
 
 def cnn_experiment(
     run_name,
+    model = None,
     out_dir="./results",
     seed=None,
     device=None,
@@ -86,7 +87,7 @@ def cnn_experiment(
     # Training params
     bs_train=128,
     bs_test=None,
-    batches=100,
+    batches=None,
     epochs=100,
     early_stopping=3,
     checkpoints=None,
@@ -149,14 +150,17 @@ def cnn_experiment(
 
     channels = [layer for layer in filters_per_layer for i in range(layers_per_block)]
 
-    model = model_cls(in_size=in_size, out_classes=len(ds_train.classes),
-                      channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
-                      **kw)
+    if model is None:
+        model = model_cls(in_size=in_size, out_classes=len(ds_train.classes),
+                          channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
+                          **kw)
+
     # Writer will output to ./runs/ directory by default
-    writer = SummaryWriter()
-    writer.add_graph(model, features1)
     model = model.to(device)
-    print(model)
+    writer = SummaryWriter()
+    writer.add_graph(model, features1.to(device))
+
+    #print(model)
 
     if optimizer is "identity":
         optimizer = None
