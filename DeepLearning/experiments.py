@@ -9,7 +9,7 @@ import torchvision
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.datasets import CIFAR10
-
+import torch.optim as optim
 from .train_results import FitResult
 
 from .cnn import CNN, ResNet, YourCNN
@@ -135,8 +135,9 @@ def cnn_experiment(
     model_cls = MODEL_TYPES[model_type]
     fit_res = None
 
-    dl_train = torch.utils.data.DataLoader(ds_train, bs_train, shuffle=True)
-    dl_test = torch.utils.data.DataLoader(ds_test, bs_test, shuffle=True)
+    # TODO drop last?
+    dl_train = torch.utils.data.DataLoader(ds_train, bs_train, shuffle=True,drop_last=True)
+    dl_test = torch.utils.data.DataLoader(ds_test, bs_test, shuffle=True,drop_last=True)
 
     # get some random training images
     data_iter = iter(dl_train)
@@ -160,15 +161,19 @@ def cnn_experiment(
     writer = SummaryWriter()
     writer.add_graph(model, features1.to(device))
 
-    #print(model)
+    print("Using Device: ", device)
 
     if optimizer is "identity":
         optimizer = None
     elif optimizer is None:
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
+    # TODO tweak scheduler parameters
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6, threshold=0.0001,
+                                                     threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08,
+                                                     verbose=True)
     trainer = ClassifierTrainer(model, features_loss_fns, features_loss_weights, label_loss_fns, label_loss_weights,
-                                optimizer, device)
+                                optimizer,scheduler ,device)
     fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test, num_epochs=epochs, checkpoints=checkpoints,
                           early_stopping=early_stopping, print_every=1, **{'max_batches': batches})
 

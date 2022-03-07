@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+
 import torchvision
 import torchvision.transforms as transforms
 from prettytable import PrettyTable
@@ -109,13 +109,15 @@ pkl_path2 = 'Insight/insightface/recognition/arcface_torch/r50_features'
 # Datasets
 pkl_dataset = pklDataset.PklEmbeddingsDataset(pkl_path1,pkl_path2)
 train_set, val_set, test_set = pklDataset.SplitDataset(pkl_dataset,n_labels=40000 ,val_ratio=0.1, test_ratio=0.1)
+#pklDataset.InterpolateDatasetRandom(train_set,pkl_dataset)
 
 features_loss_fns = [torch.nn.CosineSimilarity(), torch.nn.MSELoss()]
-features_loss_weights = [1,0]
+features_loss_weights = [1,10]
 label_loss_fns = []
 label_loss_weights = []
 
 # optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+
 
 msresnet = DeepLearning.MSResnet.MSResNet(input_channel=1, layers=[1, 1, 1, 1],num_classes=len(pkl_dataset.ds1.classes),embedding_size=512)
 

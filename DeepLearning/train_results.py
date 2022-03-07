@@ -9,6 +9,7 @@ class BatchResult(NamedTuple):
 
     loss: float
     num_correct: int
+    losses: dict
 
 
 class EpochResult(NamedTuple):
@@ -19,6 +20,7 @@ class EpochResult(NamedTuple):
 
     losses: List[float]
     accuracy: float
+    avg_losses: dict
 
 
 class FitResult(NamedTuple):

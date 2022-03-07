@@ -1,12 +1,15 @@
 import os
 import abc
 import sys
+from itertools import chain
+
 import torch
 import torch.nn as nn
 import tqdm.auto
 from torch import Tensor
 from typing import Any, Tuple, Callable, Optional, cast
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler  import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from typing import Sequence
 from torch.utils.tensorboard import SummaryWriter
@@ -82,32 +85,43 @@ class Trainer(abc.ABC):
             self._print(f"--- EPOCH {epoch + 1}/{num_epochs} ---", verbose)
 
             actual_num_epochs += 1
-            train_losses, train_accuracy = self.train_epoch(dl_train, verbose=verbose, **kw)
+            train_losses, train_accuracy,train_avg_losses = self.train_epoch(dl_train, verbose=verbose, **kw)
             train_acc.append(train_accuracy)
             batch_train_loss = sum(train_losses) / len(train_losses)
             train_loss.append(batch_train_loss)
 
+            # Invoke scheduler at end of epoch
+            self.scheduler.step(batch_train_loss)
+
             test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_accuracy = test_result.accuracy
             test_losses = test_result.losses
+            test_avg_losses = test_result.avg_losses
             test_acc.append(test_accuracy)
             batch_test_loss = sum(test_losses) / len(test_losses)
             test_loss.append(batch_test_loss)
 
+            # + operator is used to perform task of concatenation
+            train_avg_losses = {'train_' + str(key): val for key, val in train_avg_losses.items()}
+            test_avg_losses = {'test_' + str(key): val for key, val in test_avg_losses.items()}
+            avg_losses = dict(chain(train_avg_losses.items(), test_avg_losses.items()))
             # ...log the running loss
             writer.add_scalars(f'./Loss/',
-                              {
-                                  'Training Loss': batch_train_loss,
-                                  'Test Loss': batch_test_loss
-                              },
-                              epoch)
+                               {
+                                   'Training Total Loss': batch_train_loss,
+                                   'Test Total Loss': batch_test_loss
+                               },
+                               epoch)
+            writer.add_scalars(f'./AVG_LOSSES/',
+                               avg_losses,
+                               epoch)
             # ...log the running loss
             writer.add_scalars(f'./Accuracy/',
-                              {
-                                  'Training Accuracy': train_accuracy,
-                                  'Test Accuracy': test_accuracy
-                              },
-                              epoch)
+                               {
+                                   'Training Accuracy': train_accuracy,
+                                   'Test Accuracy': test_accuracy
+                               },
+                               epoch)
 
 
             if best_loss is None or batch_test_loss < best_loss:
@@ -122,6 +136,7 @@ class Trainer(abc.ABC):
                 # No improvement
                 epochs_without_improvement += 1
                 if early_stopping and epochs_without_improvement is early_stopping:
+                    print("invoking early stop")
                     break
 
         return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
@@ -197,11 +212,11 @@ class Trainer(abc.ABC):
         Evaluates the given forward-function on batches from the given
         dataloader, and prints progress along the way.
         """
-        losses = []
+        total_losses = []
+        losses_dicts = []
         num_correct = 0
         num_samples = len(dl.sampler)
         num_batches = len(dl.batch_sampler)
-
         if max_batches is not None:
             if max_batches < num_batches:
                 num_batches = max_batches
@@ -224,11 +239,20 @@ class Trainer(abc.ABC):
                 pbar.set_description(f"{pbar_name} ({batch_res.loss:.3f})")
                 pbar.update()
 
-                losses.append(batch_res.loss)
+                losses_dicts.append(batch_res.losses)
+                total_losses.append(batch_res.loss)
                 num_correct += batch_res.num_correct
 
-            avg_loss = sum(losses) / num_batches
-            accuracy = 100 - 100.0 * (avg_loss/2)
+            avg_loss = sum(total_losses) / num_batches
+            accuracy = 100.0 * num_correct / num_samples
+            # Calc avg loss for each component
+            avg_losses = {}
+            loss_fcs_names = losses_dicts[0].keys()
+            losses_tensor = torch.empty(num_batches)
+            for loss_fcn_name in loss_fcs_names:
+                for i,losses_dict in enumerate(losses_dicts):
+                    losses_tensor[i] = losses_dict[loss_fcn_name]
+                avg_losses[loss_fcn_name] = torch.mean(losses_tensor)
             pbar.set_description(
                 f"{pbar_name} "
                 f"(Avg. Loss {avg_loss:.3f}, "
@@ -238,7 +262,7 @@ class Trainer(abc.ABC):
         if not verbose:
             pbar_file.close()
 
-        return EpochResult(losses=losses, accuracy=accuracy)
+        return EpochResult(losses=total_losses, accuracy=accuracy,avg_losses =avg_losses)
 
 
 class ClassifierTrainer(Trainer):
@@ -254,6 +278,7 @@ class ClassifierTrainer(Trainer):
             label_loss_fns: Sequence[nn.Module],
             label_loss_weights: Sequence[nn.Module],
             optimizer: Optimizer,
+            scheduler: ReduceLROnPlateau,
             device: Optional[torch.device] = None,
     ):
         """
@@ -267,6 +292,7 @@ class ClassifierTrainer(Trainer):
         assert len(label_loss_fns) == len(label_loss_weights)
         super().__init__(model, device)
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.features_loss_fns = features_loss_fns
         self.features_loss_weights = features_loss_weights
         self.label_loss_fns = label_loss_fns
@@ -274,13 +300,17 @@ class ClassifierTrainer(Trainer):
 
     def calc_loss(self, input, ground_truth, loss_fcs, loss_weights):
         batch_loss = None
+        losses = {}
         for loss_fn, loss_weight in zip(loss_fcs, loss_weights):
+            if loss_weight == 0:
+                continue
             loss = loss_fn(input, ground_truth)  # Y is GT of embedding vector
             if type(loss_fn) is nn.CosineSimilarity:
                 loss = torch.mean(1 - loss)
             weighted_loss = loss_weight * loss
             batch_loss = batch_loss + weighted_loss if batch_loss is not None else weighted_loss
-        return batch_loss
+            losses[type(loss_fn).__name__] = weighted_loss.item()
+        return batch_loss , losses
 
     def forward_pass(self, X1, X2, y):
 
@@ -288,21 +318,25 @@ class ClassifierTrainer(Trainer):
 
         transformed_features, y_hat = self.model(X1)
         y_hat = y_hat.to(self.device)
-        feature_loss = self.calc_loss(input=transformed_features, ground_truth=X2, loss_fcs=self.features_loss_fns,
+        feature_loss , features_losses = self.calc_loss(input=transformed_features, ground_truth=X2, loss_fcs=self.features_loss_fns,
                                       loss_weights=self.features_loss_weights)
-        label_loss = self.calc_loss(input=y_hat, ground_truth=y, loss_fcs=self.label_loss_fns,
+        label_loss , label_losses = self.calc_loss(input=y_hat, ground_truth=y, loss_fcs=self.label_loss_fns,
                                     loss_weights=self.label_loss_weights)
+        # Merge losses
+        features_losses = {'feature_' + str(key): val for key, val in features_losses.items()}
+        label_losses = {'label_' + str(key): val for key, val in label_losses.items()}
+        losses = dict(chain(features_losses.items(), label_losses.items()))
+
         batch_loss = feature_loss
         if label_loss is not None:
             batch_loss += + label_loss
         _, y_indices = torch.max(y_hat, dim=1)
-        # TODO : Complete calculation, works if using cosine loss only
-        #num_correct = torch.abs((1 - batch_loss) * y.shape[0])
         num_correct = (y_indices == y).sum()
-        return batch_loss, num_correct
+        return batch_loss, num_correct , losses
 
     def train_batch(self, batch) -> BatchResult:
         X1,X2, y = batch
+
         if self.device:
             X1 = X1.to(self.device)
             X2 = X2.to(self.device)
@@ -313,7 +347,7 @@ class ClassifierTrainer(Trainer):
         num_correct: int
 
         # Forward Pass
-        batch_loss, num_correct = self.forward_pass(X1,X2, y)
+        batch_loss, num_correct , losses = self.forward_pass(X1,X2, y)
 
         # Backward-pass + Update parameters
 
@@ -322,7 +356,8 @@ class ClassifierTrainer(Trainer):
             batch_loss.backward()
             self.optimizer.step()
 
-        return BatchResult(batch_loss.item(), num_correct.item())
+
+        return BatchResult(batch_loss.item(), num_correct.item(),losses)
 
     def test_batch(self, batch) -> BatchResult:
         X1, X2, y = batch
@@ -337,6 +372,6 @@ class ClassifierTrainer(Trainer):
 
         with torch.no_grad():
             # Forward Pass
-            batch_loss, num_correct = self.forward_pass(X1,X2, y)
+            batch_loss, num_correct , losses = self.forward_pass(X1,X2, y)
 
-        return BatchResult(batch_loss.item(), num_correct.item())
+        return BatchResult(batch_loss.item(), num_correct.item(),losses)
