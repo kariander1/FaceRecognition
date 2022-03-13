@@ -108,29 +108,51 @@ pkl_path2 = 'Insight/insightface/recognition/arcface_torch/r50_features'
 
 # Datasets
 pkl_dataset = pklDataset.PklEmbeddingsDataset(pkl_path1,pkl_path2)
-train_set, val_set, test_set = pklDataset.SplitDataset(pkl_dataset,n_labels=40000 ,val_ratio=0.1, test_ratio=0.1)
+train_set, val_set, test_set = pklDataset.SplitDataset(pkl_dataset, n_labels=40000, val_ratio=0.1, test_ratio=0.1)
+train_nn_space = pklDataset.CreateMeanLabels(train_set, 'train_not_interp')
+val_nn_space = pklDataset.CreateMeanLabels(val_set, 'val')
+test_nn_space = pklDataset.CreateMeanLabels(test_set, 'test')
 #pklDataset.InterpolateDatasetRandom(train_set,pkl_dataset)
+#train_nn_space = pklDataset.CreateMeanLabels(train_set, 'train')
 
 features_loss_fns = [torch.nn.CosineSimilarity(), torch.nn.MSELoss()]
-features_loss_weights = [1,10]
+features_loss_weights = [1,300]
 label_loss_fns = []
 label_loss_weights = []
 
-# optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
-
-
 msresnet = DeepLearning.MSResnet.MSResNet(input_channel=1, layers=[1, 1, 1, 1],num_classes=len(pkl_dataset.ds1.classes),embedding_size=512)
-
-fit_res = DeepLearning.experiments.cnn_experiment(model=msresnet, run_name="rs50_features", ds_train=train_set,
-                                                  ds_test=val_set,
+print("Training MSResNet")
+fit_res_msresnet = DeepLearning.experiments.cnn_experiment(model=msresnet, run_name="rs50_features", ds_train=train_set,
+                                                  ds_test=val_set, ds_test_for_realzis = test_set,
                                                   bs_train=batch_size, bs_test=batch_size, optimizer=None,
-                                                  epochs=200, early_stopping=5,
+                                                  epochs=200, early_stopping=10,
                                                   filters_per_layer=[64, 128, 512],
                                                   layers_per_block=0, pool_every=4, hidden_dims=[],
                                                   lr=0.001, features_loss_fns=features_loss_fns,
                                                   features_loss_weights=features_loss_weights,
                                                   label_loss_fns=label_loss_fns,
                                                   label_loss_weights=label_loss_weights,
-                                                  model_type="cnn",batches=None)
+                                                  model_type="cnn", batches=None,
+                                                  train_nn_space=train_nn_space,
+                                                  val_nn_space=val_nn_space,
+                                                  test_nn_space=test_nn_space
+                                                  )
+
+print("Training MLP")
+fit_res_mlp = DeepLearning.experiments.cnn_experiment(model=None, run_name="rs50_features", ds_train=train_set,
+                                                  ds_test=val_set, ds_test_for_realzis = test_set,
+                                                  bs_train=batch_size, bs_test=batch_size, optimizer=None,
+                                                  epochs=200, early_stopping=10,
+                                                  filters_per_layer=[64, 128, 512],
+                                                  layers_per_block=0, pool_every=4, hidden_dims=[],
+                                                  lr=0.001, features_loss_fns=features_loss_fns,
+                                                  features_loss_weights=features_loss_weights,
+                                                  label_loss_fns=label_loss_fns,
+                                                  label_loss_weights=label_loss_weights,
+                                                  model_type="cnn", batches=None,
+                                                  train_nn_space=train_nn_space,
+                                                  val_nn_space=val_nn_space,
+                                                  test_nn_space=test_nn_space
+                                                  )
 
 print("Finished")

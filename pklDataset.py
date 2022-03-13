@@ -42,6 +42,52 @@ def SplitDataset(full_dataset, n_labels, val_ratio=0.1, test_ratio=0.1):
     #         break
     #     i += full_dataset.ds1.dataset_batch_size
 
+def CreateMeanLabels(dataset,dataset_name):
+    os.makedirs('./nn_spaces', exist_ok=True)
+    pkl_nn_space_file = './nn_spaces/nn_space_' + dataset_name + '.pkl'
+    if os.path.isfile(pkl_nn_space_file):
+        with open(pkl_nn_space_file, 'rb') as fid:
+            nn_space_dict = pickle.load(fid)
+        return nn_space_dict
+    print("Creating NN space for: ",dataset_name)
+    dl = torch.utils.data.DataLoader(dataset, 1, shuffle=False, drop_last=False)
+    current_label_features = []
+    embedding_space = []
+    labels = []
+    last_y = None
+
+    for i, batch in enumerate(dl):
+        _, X2, y = batch
+        y = y.item()
+        if last_y is None:
+            last_y = y
+        if y != last_y:
+            print("Processed Label: ", last_y)
+            mean_feature = torch.stack(current_label_features).squeeze()
+            if len(mean_feature.shape) > 1:
+                mean_feature = mean_feature.mean(dim=0)
+
+            embedding_space += [mean_feature]
+            labels += [last_y]
+            current_label_features = []
+            last_y = y
+
+        current_label_features += [X2]
+
+    print("Processed Label: ", last_y)
+    mean_feature = torch.stack(current_label_features).squeeze()
+    if len(mean_feature.shape) > 1:
+        mean_feature = mean_feature.mean(dim=0)
+
+    embedding_space += [mean_feature]
+    labels += [last_y]
+
+    print("Dumping embedding space")
+    embedding_dict = {'features': torch.stack(embedding_space).squeeze(),
+                      'labels': torch.tensor(labels)}
+    with open(pkl_nn_space_file, 'wb') as file:
+        pickle.dump(embedding_dict , file)
+    return embedding_dict
 
 def InterpolateDatasetRandom(dataset, full_dataset):
     dl = torch.utils.data.DataLoader(dataset, 1, shuffle=False, drop_last=False)

@@ -76,36 +76,40 @@ def mlp_experiment(
 
 
 def cnn_experiment(
-    run_name,
-    model = None,
-    out_dir="./results",
-    seed=None,
-    device=None,
-    # Dataset
-    ds_train = None,
-    ds_test = None,
-    # Training params
-    bs_train=128,
-    bs_test=None,
-    batches=None,
-    epochs=100,
-    early_stopping=3,
-    checkpoints=None,
-    lr=1e-3,
-    reg=1e-3,
-    features_loss_fns=None,
-    features_loss_weights=None,
-    label_loss_fns=None,
-    label_loss_weights=None,
-    optimizer=None,
-    # Model params
-    filters_per_layer=[64],
-    layers_per_block=2,
-    pool_every=2,
-    hidden_dims=[1024],
-    model_type="cnn",
-    # You can add extra configuration for your experiments here
-    **kw,
+        run_name,
+        model=None,
+        out_dir="./results",
+        seed=None,
+        device=None,
+        # Dataset
+        ds_train=None,
+        ds_test=None,
+        ds_test_for_realzis=None,
+        # Training params
+        bs_train=128,
+        bs_test=None,
+        batches=None,
+        epochs=100,
+        early_stopping=3,
+        checkpoints=None,
+        lr=1e-3,
+        reg=1e-3,
+        features_loss_fns=None,
+        features_loss_weights=None,
+        label_loss_fns=None,
+        label_loss_weights=None,
+        optimizer=None,
+        # Model params
+        filters_per_layer=[64],
+        layers_per_block=2,
+        pool_every=2,
+        hidden_dims=[1024],
+        model_type="cnn",
+        train_nn_space=None,
+        val_nn_space=None,
+        test_nn_space=None,
+        # You can add extra configuration for your experiments here
+        **kw,
 ):
     """
     Executes a single run of a Part3 experiment with a single configuration.
@@ -135,10 +139,10 @@ def cnn_experiment(
     model_cls = MODEL_TYPES[model_type]
     fit_res = None
 
-    # TODO drop last?
+
     dl_train = torch.utils.data.DataLoader(ds_train, bs_train, shuffle=True,drop_last=True)
     dl_test = torch.utils.data.DataLoader(ds_test, bs_test, shuffle=True,drop_last=True)
-
+    dl_test_for_realzis = torch.utils.data.DataLoader(ds_test_for_realzis, bs_test, shuffle=True, drop_last=True)
     # get some random training images
     data_iter = iter(dl_train)
     features1,_, _ = data_iter.next()
@@ -169,12 +173,15 @@ def cnn_experiment(
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
     # TODO tweak scheduler parameters
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6, threshold=0.0001,
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, threshold=0.0001,
                                                      threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08,
                                                      verbose=True)
+
     trainer = ClassifierTrainer(model, features_loss_fns, features_loss_weights, label_loss_fns, label_loss_weights,
-                                optimizer,scheduler ,device)
-    fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test, num_epochs=epochs, checkpoints=checkpoints,
+                                optimizer, scheduler, device, train_nn_space=train_nn_space,
+                                val_nn_space=val_nn_space,
+                                test_nn_space=test_nn_space)
+    fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test,dl_test_for_realzis=dl_test_for_realzis, num_epochs=epochs, checkpoints=checkpoints,
                           early_stopping=early_stopping, print_every=1, **{'max_batches': batches})
 
 
