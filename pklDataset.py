@@ -11,45 +11,91 @@ from contextlib import contextmanager
 from torch.utils.data import Dataset, IterableDataset
 import pandas as pd
 
+def GetStartingIndices(full_dataset):
+    os.makedirs('./starting_indices', exist_ok=True)
+    pkl_file = './starting_indices/index.pkl'
+    if os.path.isfile(pkl_file):
+        with open(pkl_file, 'rb') as fid:
+            index = pickle.load(fid)
+        return index
 
-def SplitDataset(full_dataset, n_labels, val_ratio=0.1, test_ratio=0.1):
-    dataset_size = len(full_dataset)
-    label_train = n_labels * (1 - val_ratio - test_ratio)
-    label_val = n_labels * (1 - val_ratio)
-    label_test = n_labels
-    batch_size = full_dataset.ds1.dataset_batch_size
+    dl = torch.utils.data.DataLoader(full_dataset, 1, shuffle=False, drop_last=False)
+    last_y = -1
+    indices = []
+    for i, batch in enumerate(dl):
+        _, _, y = batch
+        y= y.item()
+        if y != last_y:
+            print("Added index for label "+str(y))
+            indices += [i]
+        last_y = y
 
-    train_dataset = copy.deepcopy(full_dataset)
-    train_dataset.n_records = 14031 * batch_size
+    index = torch.tensor(indices)
+    with open(pkl_file, 'wb') as file:
+        pickle.dump(index , file)
 
-    val_dataset = copy.deepcopy(full_dataset)
-    val_dataset.n_records = (15789 - 14032) * batch_size
-    val_dataset.ds1.batch_offset = 14032
-    val_dataset.ds2.batch_offset = 14032
+    return index
 
-    test_dataset = copy.deepcopy(full_dataset)
-    test_dataset.n_records = (17481 - 15790) * batch_size
-    test_dataset.ds1.batch_offset = 15780
-    test_dataset.ds2.batch_offset = 15780
 
-    return train_dataset, val_dataset, test_dataset
+def SplitDataset(full_dataset, n_labels, ratios=[]):
+    index = GetStartingIndices(full_dataset)
+    sets = []
+    new_ratios = [0]+ratios
+    index_offset = 0
+    current_ratio = 1 - sum(new_ratios)
+    for i in range(0, len(new_ratios)):
+        current_ratio += new_ratios[i]
+        last_label = int(n_labels * current_ratio - 1)
+        last_image_index = index[last_label+1].item()-1
 
-    # n_batches = dataset_size//full_dataset.ds1.dataset_batch_size
-    # i = 15790*full_dataset.ds1.dataset_batch_size
-    # for i_batch in range(15790,n_batches):
-    #     _,_,label = full_dataset[i]
-    #     if label>=label_test:
-    #         break
-    #     i += full_dataset.ds1.dataset_batch_size
+        set = copy.deepcopy(full_dataset)
+        set.n_records = last_image_index-index_offset+1
+        set.ds1.index_offset = index_offset
+        set.ds2.index_offset = index_offset
+        sets += [set]
+        index_offset = last_image_index+1
+    return sets
 
-def CreateMeanLabels(dataset,dataset_name):
+
+
+def CreateNNLabels(dataset, dataset_name):
     os.makedirs('./nn_spaces', exist_ok=True)
     pkl_nn_space_file = './nn_spaces/nn_space_' + dataset_name + '.pkl'
     if os.path.isfile(pkl_nn_space_file):
         with open(pkl_nn_space_file, 'rb') as fid:
             nn_space_dict = pickle.load(fid)
         return nn_space_dict
+
+    print("Creating NN full space for: ", dataset_name)
+
+    dl = torch.utils.data.DataLoader(dataset, 1, shuffle=False, drop_last=False)
+    embedding_space = []
+    labels = []
+    for i, batch in enumerate(dl):
+        _, X2, y = batch
+        y = y.item()
+
+        embedding_space += [X2]
+        labels += [y]
+
+    print("Dumping embedding space")
+    embedding_dict = {'features': torch.stack(embedding_space).squeeze(),
+                      'labels': torch.tensor(labels)}
+    with open(pkl_nn_space_file, 'wb') as file:
+        pickle.dump(embedding_dict, file)
+    return embedding_dict
+
+
+def CreateMeanLabels(dataset, dataset_name, force_create=False):
+    os.makedirs('./nn_spaces', exist_ok=True)
+    pkl_nn_space_file = './nn_spaces/nn_space_' + dataset_name + '.pkl'
+    if os.path.isfile(pkl_nn_space_file) and not force_create:
+        with open(pkl_nn_space_file, 'rb') as fid:
+            nn_space_dict = pickle.load(fid)
+        return nn_space_dict
+
     print("Creating NN space for: ",dataset_name)
+    index = GetStartingIndices(dataset)
     dl = torch.utils.data.DataLoader(dataset, 1, shuffle=False, drop_last=False)
     current_label_features = []
     embedding_space = []
@@ -222,7 +268,8 @@ class PklDataset(Dataset):
             self.classes = metadata_dict["classes"]
             self.dataset_batch_size = metadata_dict["batch_size"]
         self.files = [None] * (self.n_records // self.dataset_batch_size)
-        self.batch_offset = 0
+        #self.batch_offset = 0
+        self.index_offset = 0
         self.max_idx = -1
         if infer_classes_and_n_records:
             self._infer_classes_and_n_records()
@@ -240,10 +287,12 @@ class PklDataset(Dataset):
         self.classes = [int(item) for item in labels_set]
 
     def __getitem__(self, index: int) -> Tuple[Tensor, int, int]:
-        offset = 0
-        if index > self.max_idx:
-            offset = self.batch_offset
-        i_batch = offset + index // self.dataset_batch_size
+        index+=self.index_offset
+        # offset = 0
+        # if index > self.max_idx:
+        #     offset = self.batch_offset
+        # i_batch = offset + index // self.dataset_batch_size
+        i_batch = index // self.dataset_batch_size
         offset = index % self.dataset_batch_size
         batch_path = os.path.join(self.pkl_dir_path, str(i_batch) + '.pkl')
         # if self.files[i_batch] is None:

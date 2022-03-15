@@ -328,7 +328,6 @@ class ClassifierTrainer(Trainer):
             train_nn_space=None,
             val_nn_space=None,
             test_nn_space=None,
-            test_label_offset=None
     ):
         """
         Initialize the trainer.
@@ -346,10 +345,12 @@ class ClassifierTrainer(Trainer):
         self.features_loss_weights = features_loss_weights
         self.label_loss_fns = label_loss_fns
         self.label_loss_weights = label_loss_weights
-        self.train_nn_space = train_nn_space
-        self.val_nn_space = val_nn_space
-        self.test_nn_space = test_nn_space
-        self.test_label_offset = test_label_offset
+        self.train_nn_space = {'labels': train_nn_space['labels'].to(device),
+                               'features': train_nn_space['features'].to(device)}
+        self.val_nn_space = {'labels': val_nn_space['labels'].to(device),
+                             'features': val_nn_space['features'].to(device)}
+        self.test_nn_space = {'labels': test_nn_space['labels'].to(device),
+                              'features': test_nn_space['features'].to(device)}
 
     def calc_loss(self, input, ground_truth, loss_fcs, loss_weights):
         batch_loss = None
@@ -376,31 +377,35 @@ class ClassifierTrainer(Trainer):
 
         x = x.unsqueeze(1).expand(n, m, d)
         y = y.unsqueeze(0).expand(n, m, d)
-
-        dist = torch.pow(x - y, p).sum(2)
-
-        return dist
+        torch.cosine_similarity(x,y)
+        #dist_mse = torch.pow(x - y, p).sum(2)
+        dist_cosine = -(torch.cosine_similarity(x, y, dim=2))
+        return dist_cosine
 
     def forward_pass(self, X1, X2, y, nn_space,calc_acc=True):
 
         # Forward Pass
-        k = 10
+        k = 5
         transformed_features, y_hat = self.model(X1)
 
         if calc_acc:
             n_batches = 4
-            top_k = []
-            y_hat = []
-            nn_features = nn_space['features']
-            n_features_in_batch = X1.shape[0] // n_batches
-            for i in range(0, n_batches):
-                x1_batch = X1[i * n_features_in_batch:(i + 1) * n_features_in_batch].to('cpu')
-                dist = self.distance_matrix(x1_batch, nn_features, 2) ** (1 / 2)
-                knn = dist.topk(k, largest=False, sorted=True)
-                top_k += [nn_space['labels'][knn.indices].to(self.device)]
-                y_hat += [top_k[0]]
-            top_k = torch.vstack(top_k)
-            y_hat = torch.vstack(y_hat)
+            #top_k = []
+            #y_hat = []
+
+            #n_features_in_batch = X1.shape[0] // n_batches
+            dist = self.distance_matrix(transformed_features, nn_space['features'], 2)
+            knn = dist.topk(k, largest=False, sorted=True)
+            top_k = nn_space['labels'][knn.indices]
+            y_hat = top_k[:, 0]
+            # for i in range(0, n_batches):
+            #     x1_batch = X1[i * n_features_in_batch:(i + 1) * n_features_in_batch].to('cpu')
+            #     dist = self.distance_matrix(x1_batch, nn_features, 2) ** (1 / 2)
+            #     knn = dist.topk(k, largest=False, sorted=True)
+            #     top_k += [nn_space['labels'][knn.indices].to(self.device)]
+            #     y_hat += [top_k[0]]
+            # top_k = torch.vstack(top_k)
+            # y_hat = torch.vstack(y_hat)
         else:
             y_hat = y_hat.to(self.device)
             top_k = torch.zeros(size = y.shape).to(self.device) -1
@@ -417,7 +422,7 @@ class ClassifierTrainer(Trainer):
         batch_loss = feature_loss
         if label_loss is not None:
             batch_loss += + label_loss
-        if ~calc_acc:
+        if not calc_acc:
             _, y_indices = torch.max(y_hat, dim=1)
             num_correct = (y_indices == y).sum()
         else:
