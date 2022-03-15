@@ -58,10 +58,10 @@ def SplitDataset(full_dataset, n_labels, ratios=[]):
 
 
 
-def CreateNNLabels(dataset, dataset_name):
+def CreateNNLabels(dataset, dataset_name,force_run = False):
     os.makedirs('./nn_spaces', exist_ok=True)
     pkl_nn_space_file = './nn_spaces/nn_space_' + dataset_name + '.pkl'
-    if os.path.isfile(pkl_nn_space_file):
+    if os.path.isfile(pkl_nn_space_file) and not force_run:
         with open(pkl_nn_space_file, 'rb') as fid:
             nn_space_dict = pickle.load(fid)
         return nn_space_dict

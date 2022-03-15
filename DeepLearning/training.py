@@ -45,8 +45,8 @@ class Trainer(abc.ABC):
     def fit(
             self,
             dl_train: DataLoader,
+            dl_val: DataLoader,
             dl_test: DataLoader,
-            dl_test_for_realzis: DataLoader,
             num_epochs: int,
             checkpoints: str = None,
             early_stopping: int = None,
@@ -73,7 +73,7 @@ class Trainer(abc.ABC):
         actual_num_epochs = 0
         epochs_without_improvement = 0
 
-        train_loss, train_acc, test_loss, test_acc = [], [], [], []
+        train_loss, train_acc, val_loss, val_acc = [], [], [], []
         best_acc = None
         best_loss = None
         for epoch in range(num_epochs):
@@ -90,27 +90,27 @@ class Trainer(abc.ABC):
             batch_train_loss = sum(train_losses) / len(train_losses)
             train_loss.append(batch_train_loss)
 
-            test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
-            test_accuracy = test_result.accuracy
-            test_accuracy_top_k = test_result.accuracy_top_k
-            test_losses = test_result.losses
-            test_avg_losses = test_result.avg_losses
-            test_acc.append(test_accuracy)
-            batch_test_loss = sum(test_losses) / len(test_losses)
-            test_loss.append(batch_test_loss)
+            val_result = self.val_epoch(dl_val, verbose=verbose, **kw)
+            val_accuracy = val_result.accuracy
+            val_accuracy_top_k = val_result.accuracy_top_k
+            val_losses = val_result.losses
+            val_avg_losses = val_result.avg_losses
+            val_acc.append(val_accuracy)
+            batch_val_loss = sum(val_losses) / len(val_losses)
+            val_loss.append(batch_val_loss)
 
             # Invoke scheduler at end of epoch
-            self.scheduler.step(batch_test_loss)
+            self.scheduler.step(batch_val_loss)
 
             # + operator is used to perform task of concatenation
             train_avg_losses = {'train_' + str(key): val for key, val in train_avg_losses.items()}
-            test_avg_losses = {'test_' + str(key): val for key, val in test_avg_losses.items()}
-            avg_losses = dict(chain(train_avg_losses.items(), test_avg_losses.items()))
+            val_avg_losses = {'val_' + str(key): val for key, val in val_avg_losses.items()}
+            avg_losses = dict(chain(train_avg_losses.items(), val_avg_losses.items()))
             # ...log the running loss
             writer.add_scalars(f'./Loss/',
                                {
                                    'Training Total Loss': batch_train_loss,
-                                   'Test Total Loss': batch_test_loss
+                                   'Val Total Loss': batch_val_loss
                                },
                                epoch)
             writer.add_scalars(f'./AVG_LOSSES/',
@@ -120,23 +120,23 @@ class Trainer(abc.ABC):
             writer.add_scalars(f'./Accuracy/',
                                {
                                    'Training Accuracy': train_accuracy,
-                                   'Test Accuracy': test_accuracy
+                                   'Val Accuracy': val_accuracy
                                },
                                epoch)
             writer.add_scalars(f'./Accuracy_Top_K/',
                                {
                                    'Training Accuracy': train_accuracy_top_k,
-                                   'Test Accuracy': test_accuracy_top_k
+                                   'Val Accuracy': val_accuracy_top_k
                                },
                                epoch)
 
-            if best_loss is None or batch_test_loss < best_loss:
+            if best_loss is None or batch_val_loss < best_loss:
 
                 # There is improvement
                 epochs_without_improvement = 0
                 if checkpoints:
                     self.save_checkpoint(checkpoints)
-                best_loss = batch_test_loss
+                best_loss = batch_val_loss
 
             else:
                 # No improvement
@@ -145,21 +145,21 @@ class Trainer(abc.ABC):
                     print("invoking early stop")
                     break
 
-        # Test model on realzis
-        test_realzis_result = self.test_for_realzis_epoch(dl_test_for_realzis, verbose=verbose, **kw)
-        test_realzis_accuracy = test_realzis_result.accuracy
-        test_realzis_accuracy_top_k = test_realzis_result.accuracy_top_k
-        test_realzis_losses = test_realzis_result.losses
-        batch_test_realzis_loss = sum(test_realzis_losses) / len(test_realzis_losses)
+        # Test model on test data
+        test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
+        test_accuracy = test_result.accuracy
+        test_accuracy_top_k = test_result.accuracy_top_k
+        test_losses = test_result.losses
+        batch_test_loss = sum(test_losses) / len(test_losses)
         writer.add_scalars(f'./Final Test Results/',
                            {
-                               'Loss': batch_test_realzis_loss,
-                               'Accuracy': test_realzis_accuracy,
-                               'Accuracy Top K': test_realzis_accuracy_top_k,
+                               'Loss': batch_test_loss,
+                               'Accuracy': test_accuracy,
+                               'Accuracy Top K': test_accuracy_top_k,
                            },
                            epoch)
 
-        return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
+        return FitResult(actual_num_epochs, train_loss, train_acc, val_loss, val_acc)
 
     def save_checkpoint(self, checkpoint_filename: str):
         """
@@ -180,7 +180,7 @@ class Trainer(abc.ABC):
         self.model.train(True)  # set train mode
         return self._foreach_batch(dl_train, self.train_batch, **kw)
 
-    def test_for_realzis_epoch(self, dl_test: DataLoader, **kw) -> EpochResult:
+    def val_epoch(self, dl_val: DataLoader, **kw) -> EpochResult:
         """
         Evaluate model once over a test set (single epoch).
         :param dl_test: DataLoader for the test set.
@@ -188,7 +188,7 @@ class Trainer(abc.ABC):
         :return: An EpochResult for the epoch.
         """
         self.model.train(False)  # set evaluation (test) mode
-        return self._foreach_batch(dl_test, self.test_for_realzis_batch, **kw)
+        return self._foreach_batch(dl_val, self.val_batch, **kw)
 
     def test_epoch(self, dl_test: DataLoader, **kw) -> EpochResult:
         """
@@ -214,7 +214,7 @@ class Trainer(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def test_batch(self, batch) -> BatchResult:
+    def val_batch(self, batch) -> BatchResult:
         """
         Runs a single batch forward through the model and calculates loss.
         :param batch: A single batch of data  from a data loader (might
@@ -226,7 +226,7 @@ class Trainer(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def test_for_realzis_batch(self, batch) -> BatchResult:
+    def test_batch(self, batch) -> BatchResult:
         """
         Runs a single batch forward through the model and calculates loss.
         :param batch: A single batch of data  from a data loader (might
@@ -258,12 +258,12 @@ class Trainer(abc.ABC):
         losses_dicts = []
         num_correct = 0
         num_top_k = 0
-        num_samples = len(dl.sampler)
+        num_samples = 0
         num_batches = len(dl.batch_sampler)
         if max_batches is not None:
-            if max_batches < num_batches:
+            if max_batches <= num_batches:
                 num_batches = max_batches
-                num_samples = num_batches * dl.batch_size
+                #num_samples = num_batches * dl.batch_size
 
         if verbose:
             pbar_fn = tqdm.auto.tqdm
@@ -286,6 +286,7 @@ class Trainer(abc.ABC):
                 total_losses.append(batch_res.loss)
                 num_correct += batch_res.num_correct
                 num_top_k += batch_res.num_top_k
+                num_samples += batch_res.n_samples
             avg_loss = sum(total_losses) / num_batches
             accuracy = 100.0 * num_correct / num_samples
             accuracy_top_k = 100.0 * num_top_k / num_samples
@@ -429,7 +430,7 @@ class ClassifierTrainer(Trainer):
             num_correct = (y_hat == y).sum()
 
         # Calc top k
-        num_top_k = (top_k == torch.unsqueeze(y,dim=1)).sum()
+        num_top_k = torch.any(top_k == torch.unsqueeze(y,dim=1),dim=1).sum()
         return batch_loss, num_correct,num_top_k, losses
 
     def train_batch(self, batch) -> BatchResult:
@@ -455,9 +456,9 @@ class ClassifierTrainer(Trainer):
             batch_loss.backward()
             self.optimizer.step()
 
-        return BatchResult(batch_loss.item(), num_correct.item(),num_top_k.item(), losses)
+        return BatchResult(batch_loss.item(), num_correct.item(),num_top_k.item(), losses,y.numel())
 
-    def test_batch(self, batch) -> BatchResult:
+    def val_batch(self, batch) -> BatchResult:
         X1, X2, y = batch
         if self.device:
             X1 = X1.to(self.device)
@@ -472,9 +473,9 @@ class ClassifierTrainer(Trainer):
             # Forward Pass
             batch_loss, num_correct,num_top_k, losses = self.forward_pass(X1, X2, y, self.val_nn_space)
 
-        return BatchResult(batch_loss.item(), num_correct.item(),num_top_k.item(), losses)
+        return BatchResult(batch_loss.item(), num_correct.item(),num_top_k.item(), losses,y.numel())
 
-    def test_for_realzis_batch(self, batch) -> BatchResult:
+    def test_batch(self, batch) -> BatchResult:
         X1, X2, y = batch
         if self.device:
             X1 = X1.to(self.device)
@@ -489,4 +490,4 @@ class ClassifierTrainer(Trainer):
             # Forward Pass
             batch_loss, num_correct,num_top_k, losses = self.forward_pass(X1, X2, y, self.test_nn_space)
 
-        return BatchResult(batch_loss.item(), num_correct.item(),num_top_k.item(), losses)
+        return BatchResult(batch_loss.item(), num_correct.item(),num_top_k.item(), losses,y.numel())

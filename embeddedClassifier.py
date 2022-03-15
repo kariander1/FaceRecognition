@@ -133,8 +133,8 @@ def main(args):
 
 
     fit_res_msresnet = DeepLearning.experiments.cnn_experiment(model=msresnet, run_name="rs50_features", ds_train=train_set,
-                                                               ds_test=val_set, ds_test_for_realzis=test_set,
-                                                               bs_train=batch_size, bs_test=batch_size, optimizer=None,
+                                                               ds_val=val_set, ds_test=test_set,
+                                                               bs_train=batch_size, bs_val=batch_size, optimizer=None,
                                                                epochs=200, early_stopping=10,
                                                                filters_per_layer=[64, 128, 512],
                                                                layers_per_block=0, pool_every=4, hidden_dims=[],
@@ -150,8 +150,8 @@ def main(args):
 
     print("Training MLP")
     fit_res_mlp = DeepLearning.experiments.cnn_experiment(model=None, run_name="rs50_features", ds_train=train_set,
-                                                          ds_test=val_set, ds_test_for_realzis=test_set,
-                                                          bs_train=batch_size, bs_test=batch_size, optimizer=None,
+                                                          ds_val=val_set, ds_test=test_set,
+                                                          bs_train=batch_size, bs_val=batch_size, optimizer=None,
                                                           epochs=200, early_stopping=10,
                                                           filters_per_layer=[64, 128, 512],
                                                           layers_per_block=0, pool_every=4, hidden_dims=[],

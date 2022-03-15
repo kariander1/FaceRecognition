@@ -11,6 +11,7 @@ class BatchResult(NamedTuple):
     num_correct: int
     num_top_k: int
     losses: dict
+    n_samples : int
 
 
 class EpochResult(NamedTuple):

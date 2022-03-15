@@ -83,11 +83,11 @@ def cnn_experiment(
         device=None,
         # Dataset
         ds_train=None,
+        ds_val=None,
         ds_test=None,
-        ds_test_for_realzis=None,
         # Training params
         bs_train=128,
-        bs_test=None,
+        bs_val=None,
         batches=None,
         epochs=100,
         early_stopping=3,
@@ -120,15 +120,15 @@ def cnn_experiment(
     if not seed:
         seed = random.randint(0, 2 ** 31)
     torch.manual_seed(seed)
-    if not bs_test:
-        bs_test = max([bs_train // 4, 1])
+    if not bs_val:
+        bs_val = max([bs_train // 4, 1])
     cfg = locals()
 
     tf = torchvision.transforms.ToTensor()
     if ds_train is None:
         ds_train = CIFAR10(root=DATA_DIR, download=True, train=True, transform=tf)
-    if ds_test is None:
-        ds_test = CIFAR10(root=DATA_DIR, download=True, train=False, transform=tf)
+    if ds_val is None:
+        ds_val = CIFAR10(root=DATA_DIR, download=True, train=False, transform=tf)
 
     if not device:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -139,13 +139,12 @@ def cnn_experiment(
     model_cls = MODEL_TYPES[model_type]
     fit_res = None
 
-
-    dl_train = torch.utils.data.DataLoader(ds_train, bs_train, shuffle=True,drop_last=True)
-    dl_test = torch.utils.data.DataLoader(ds_test, bs_test, shuffle=True,drop_last=True)
-    dl_test_for_realzis = torch.utils.data.DataLoader(ds_test_for_realzis, bs_test, shuffle=True, drop_last=True)
+    dl_train = torch.utils.data.DataLoader(ds_train, bs_train, shuffle=True, drop_last=True)
+    dl_val = torch.utils.data.DataLoader(ds_val, bs_val, shuffle=True, drop_last=True)
+    dl_test = torch.utils.data.DataLoader(ds_test, bs_val, shuffle=True, drop_last=True)
     # get some random training images
     data_iter = iter(dl_train)
-    features1,_, _ = data_iter.next()
+    features1, _, _ = data_iter.next()
 
     in_size = []
     in_size += features1[0].shape
@@ -181,7 +180,7 @@ def cnn_experiment(
                                 optimizer, scheduler, device, train_nn_space=train_nn_space,
                                 val_nn_space=val_nn_space,
                                 test_nn_space=test_nn_space)
-    fit_res = trainer.fit(dl_train=dl_train, dl_test=dl_test,dl_test_for_realzis=dl_test_for_realzis, num_epochs=epochs, checkpoints=checkpoints,
+    fit_res = trainer.fit(dl_train=dl_train, dl_val=dl_val,dl_test=dl_test, num_epochs=epochs, checkpoints=checkpoints,
                           early_stopping=early_stopping, print_every=1, **{'max_batches': batches})
 
 
