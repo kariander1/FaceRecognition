@@ -11,6 +11,8 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision.datasets import CIFAR10
 import torch.optim as optim
 from .train_results import FitResult
+from datetime import datetime
+
 
 from .cnn import CNN, ResNet, YourCNN
 from .mlp import MLP
@@ -122,6 +124,10 @@ def cnn_experiment(
     torch.manual_seed(seed)
     if not bs_val:
         bs_val = max([bs_train // 4, 1])
+    if checkpoints:
+        now = datetime.now()
+
+        checkpoints = checkpoints+'_'+now.strftime("%d_%m_%Y_%H_%M_%S")
     cfg = locals()
 
     tf = torchvision.transforms.ToTensor()

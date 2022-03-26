@@ -80,12 +80,15 @@ def main(args):
 
     pkl_dataset = pklDataset.PklEmbeddingsDataset(pkl_path1,pkl_path2)
 
+
     [train_set, val_set, test_set] = pklDataset.SplitDataset(pkl_dataset, n_labels=40000, ratios = [0.006 , 0.006])
-    #train_nn_space = pklDataset.CreateMeanLabels(train_set, 'train_not_interp')
+
+
+    interp_train_set = pklDataset.InterpolateDatasetRandom(train_set,pkl_dataset)
+    # train_nn_space = pklDataset.CreateMeanLabels(train_set, 'train_not_interp')
+    #train_nn_space = pklDataset.CreateMeanLabels(train_set, 'train')
     val_nn_space = pklDataset.CreateNNLabels(val_set, 'val_new_split')
     test_nn_space = pklDataset.CreateNNLabels(test_set, 'test_new_split')
-    #pklDataset.InterpolateDatasetRandom(train_set,pkl_dataset)
-    #train_nn_space = pklDataset.CreateMeanLabels(train_set, 'train')
 
     features_loss_fns = [torch.nn.CosineSimilarity(), torch.nn.MSELoss()]
     features_loss_weights = [1,300]
@@ -132,12 +135,51 @@ def main(args):
 
 
 
+
+
+    fit_res_msresnet = DeepLearning.experiments.cnn_experiment(model=msresnet, run_name="rs50_features", ds_train=interp_train_set,
+                                                               ds_val=val_set, ds_test=test_set,
+                                                               bs_train=batch_size, bs_val=batch_size, optimizer=None,
+                                                               epochs=200, early_stopping=10,
+                                                               filters_per_layer=[64, 128, 512],
+                                                               layers_per_block=0, pool_every=4, hidden_dims=[],
+                                                               checkpoints="./checkpoints/resnet_interp_emb",
+                                                               lr=0.001, features_loss_fns=features_loss_fns,
+                                                               features_loss_weights=features_loss_weights,
+                                                               label_loss_fns=label_loss_fns,
+                                                               label_loss_weights=label_loss_weights,
+                                                               model_type="cnn", batches=None,
+                                                               train_nn_space=val_nn_space,
+                                                               val_nn_space=val_nn_space,
+                                                               test_nn_space=test_nn_space
+                                                               )
+
+    print("Training MLP")
+    fit_res_mlp = DeepLearning.experiments.cnn_experiment(model=None, run_name="rs50_features", ds_train=interp_train_set,
+                                                          ds_val=val_set, ds_test=test_set,
+                                                          bs_train=batch_size, bs_val=batch_size, optimizer=None,
+                                                          epochs=200, early_stopping=10,
+                                                          filters_per_layer=[64, 128, 512],
+                                                          layers_per_block=0, pool_every=4, hidden_dims=[],
+                                                          checkpoints="./checkpoints/mlp_interp_emb",
+                                                          lr=0.001, features_loss_fns=features_loss_fns,
+                                                          features_loss_weights=features_loss_weights,
+                                                          label_loss_fns=label_loss_fns,
+                                                          label_loss_weights=label_loss_weights,
+                                                          model_type="cnn", batches=None,
+                                                          train_nn_space=val_nn_space,
+                                                          val_nn_space=val_nn_space,
+                                                          test_nn_space=test_nn_space
+                                                          )
+
+
     fit_res_msresnet = DeepLearning.experiments.cnn_experiment(model=msresnet, run_name="rs50_features", ds_train=train_set,
                                                                ds_val=val_set, ds_test=test_set,
                                                                bs_train=batch_size, bs_val=batch_size, optimizer=None,
                                                                epochs=200, early_stopping=10,
                                                                filters_per_layer=[64, 128, 512],
                                                                layers_per_block=0, pool_every=4, hidden_dims=[],
+                                                               checkpoints="./checkpoints/resnet_emb",
                                                                lr=0.001, features_loss_fns=features_loss_fns,
                                                                features_loss_weights=features_loss_weights,
                                                                label_loss_fns=label_loss_fns,
@@ -155,6 +197,7 @@ def main(args):
                                                           epochs=200, early_stopping=10,
                                                           filters_per_layer=[64, 128, 512],
                                                           layers_per_block=0, pool_every=4, hidden_dims=[],
+                                                          checkpoints="./checkpoints/mlp_emb",
                                                           lr=0.001, features_loss_fns=features_loss_fns,
                                                           features_loss_weights=features_loss_weights,
                                                           label_loss_fns=label_loss_fns,

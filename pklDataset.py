@@ -135,54 +135,88 @@ def CreateMeanLabels(dataset, dataset_name, force_create=False):
         pickle.dump(embedding_dict , file)
     return embedding_dict
 
-def InterpolateDatasetRandom(dataset, full_dataset):
-    dl = torch.utils.data.DataLoader(dataset, 1, shuffle=False, drop_last=False)
-    stop_label = 31999
-    current_label = max(dataset.classes) + 1
 
+def GetLabelVectors(label, index, lengths, full_dataset):
+    i_label_start = index[label].item()
+    i_label_stop = i_label_start + lengths[label].item()
+    x1_vectors, x2_vectors = [], []
+    for i in range(i_label_start, i_label_stop):
+        x1, x2, y = full_dataset[i]
+        assert y == label
+        x1_vectors += [x1]
+        x2_vectors += [x2]
+
+    x1 = torch.stack(x1_vectors)
+    x2 = torch.stack(x2_vectors)
+    return x1,x2
+
+
+def InterpolateDatasetRandom(dataset, full_dataset, min_interp_num=20, max_interp_num=30):
+    set = copy.deepcopy(dataset)
+    index = GetStartingIndices(full_dataset)
+    _,_,label_first = set[0]
+    _, _, label_last = set[len(set)-1]
+    index = index[label_first:label_last+1]
+    indices_shift = torch.hstack([index[1:] , torch.tensor(len(set))])
+    lengths = indices_shift - index
+    [sorted, idx_sorted] = torch.sort(lengths, descending=True)
+
+    current_label = max(set.classes) + 1
+
+    pkl_batch_size =  set.ds1.dataset_batch_size
     n_images = len(full_dataset)
-    pkl_file_i = n_images // 128
-    batch_offset = pkl_file_i - 14031
-    max_idx = len(dataset) - 1
-    paths = ['./Insight/insightface/recognition/arcface_torch/r18_features',
-             './Insight/insightface/recognition/arcface_torch/r50_features']
+    pkl_file_i = n_images // pkl_batch_size
+    max_idx_offset = len(full_dataset) - len(set)
+    max_idx = len(set) - 1
+    interpolated_cnt = 959872
+    if interpolated_cnt==0:
+        paths = ['./Insight/insightface/recognition/arcface_torch/r18_features',
+                 './Insight/insightface/recognition/arcface_torch/r50_features']
 
-    ds_features_r18 = [[], []]
-    ds_features_r50 = [[], []]
-    ds_features_r18_interpolated = torch.empty(size=(0, 512))
-    ds_features_r50_interpolated = torch.empty(size=(0, 512))
-    ds_interpolated_lists = [ds_features_r18_interpolated, ds_features_r50_interpolated]
+        # ds_features_r18 = [[], []]
+        # ds_features_r50 = [[], []]
+        ds_features_r18_interpolated = torch.empty(size=(0, 512))
+        ds_features_r50_interpolated = torch.empty(size=(0, 512))
+        ds_interpolated_lists = [ds_features_r18_interpolated, ds_features_r50_interpolated]
 
-    label_list = []
+        label_list = []
 
-    ds_features_list = [ds_features_r18, ds_features_r50]
-    first_even_id = False
-    for i, batch in enumerate(dl):
-
-        X1, X2, y = batch
-        y = y.item()
-        if y > stop_label:
-            break
-        if y % 2 == 0 and y != 0 and not first_even_id:
-            first_even_id = True
-            # Take min size
+        # ds_features_list = [ds_features_r18, ds_features_r50]
+        # first_even_id = False
+        #for i, batch in enumerate(dl):
+        for [[prev_num_vectors, prev_label] , [num_vectors, label]]  in zip(zip(sorted, idx_sorted) ,zip(sorted[1:], idx_sorted[1:]) ):
+            X1_prev, X2_prev = GetLabelVectors(prev_label, index, lengths, full_dataset)
+            X1,X2 = GetLabelVectors(label,index,lengths,full_dataset)
+            ds_features_r18 = [X1_prev,X1]
+            ds_features_r50 = [X2_prev, X2]
+            #X1, X2, y = batch
+            #y = y.item()
+            #if y > stop_label:
+            #    break
+            #if y % 2 == 0 and y != 0 and not first_even_id:
+                #first_even_id = True
+                # Take min size
             ds_features_list = [ds_features_r18, ds_features_r50]
-            min_len = min([len(ds_features_list[0][0]), len(ds_features_list[0][1])])
+            min_len = min([len(ds_features_list[0][0]), len(ds_features_list[0][1]),max_interp_num])
+            max_len = max([len(ds_features_list[0][0]), len(ds_features_list[0][1])])
+            if max_len<min_interp_num:
+                # TODO complete
+                break
             label_list += [current_label] * min_len
             current_label = current_label + 1
 
             for i_ds, ds_features in enumerate(ds_features_list):
 
-                ds_features_label_even = torch.stack(ds_features[0][:min_len]).squeeze()
-                ds_features_label_odd = torch.stack(ds_features[1][:min_len]).squeeze()
+                ds_features_label_even = ds_features[0][:min_len]
+                ds_features_label_odd = ds_features[1][:min_len]
                 ds_features_interpolated = (ds_features_label_even + ds_features_label_odd) / 2
                 ds_interpolate = ds_interpolated_lists[i_ds]
                 ds_interpolated_lists[i_ds] = torch.vstack((ds_interpolate, ds_features_interpolated))
 
-                if ds_interpolated_lists[i_ds].shape[0] >= 128:
-                    new_pkl_features = ds_interpolated_lists[i_ds][:128, :]
-                    idx_tensor = torch.tensor(list(range(n_images, n_images + 128)))
-                    label_tensor = torch.tensor(label_list[:128])
+                if ds_interpolated_lists[i_ds].shape[0] >= pkl_batch_size:
+                    new_pkl_features = ds_interpolated_lists[i_ds][:pkl_batch_size, :]
+                    idx_tensor = torch.tensor(list(range(n_images, n_images + pkl_batch_size)))
+                    label_tensor = torch.tensor(label_list[:pkl_batch_size])
 
                     temp_tensor = torch.hstack((torch.unsqueeze(idx_tensor, dim=1),
                                                 torch.unsqueeze(label_tensor, dim=1),
@@ -192,28 +226,29 @@ def InterpolateDatasetRandom(dataset, full_dataset):
                     with open(pkl_batch, 'wb') as file:
                         pickle.dump(temp_tensor, file)
 
-                    ds_interpolated_lists[i_ds] = ds_interpolated_lists[i_ds][128:, :]
+                    ds_interpolated_lists[i_ds] = ds_interpolated_lists[i_ds][pkl_batch_size:, :]
                     if i_ds == 1:
                         print("Dumped ", pkl_batch)
-                        label_list = label_list[128:]
-                        n_images = n_images + 128
+                        label_list = label_list[pkl_batch_size:]
+                        n_images = n_images + pkl_batch_size
                         pkl_file_i = pkl_file_i + 1
+                        interpolated_cnt += pkl_batch_size
 
-            ds_features_r18 = [[], []]
-            ds_features_r50 = [[], []]
-        elif y % 2 != 0:
-            first_even_id = False
+                # ds_features_r18 = [[], []]
+                # ds_features_r50 = [[], []]
+            #elif y % 2 != 0:
+            #    first_even_id = False
 
-        ds_features_r18[y % 2].append(X1)
-        ds_features_r50[y % 2].append(X2)
+            # ds_features_r18[y % 2].append(X1)
+            # ds_features_r50[y % 2].append(X2)
 
-    dataset.n_records = len(dataset) + (pkl_file_i - len(full_dataset) // 128) * 128
-    dataset.ds1.batch_offset = batch_offset
-    dataset.ds2.batch_offset = batch_offset
-    dataset.ds1.max_idx = max_idx
-    dataset.ds2.max_idx = max_idx
-    print("n_records", str(dataset.n_records), "batch_offset", str(batch_offset), "Max Idx", str(max_idx))
-
+    set.n_records = len(set) + interpolated_cnt
+    set.ds1.max_idx_offset = max_idx_offset
+    set.ds2.max_idx_offset = max_idx_offset
+    set.ds1.max_idx = max_idx
+    set.ds2.max_idx = max_idx
+    print("n_records", str(set.n_records), "interpolated count", str(interpolated_cnt), "Max Idx", str(max_idx))
+    return set
 
 class PklEmbeddingsDataset(Dataset):
     """
@@ -268,7 +303,7 @@ class PklDataset(Dataset):
             self.classes = metadata_dict["classes"]
             self.dataset_batch_size = metadata_dict["batch_size"]
         self.files = [None] * (self.n_records // self.dataset_batch_size)
-        #self.batch_offset = 0
+        self.max_idx_offset = 0
         self.index_offset = 0
         self.max_idx = -1
         if infer_classes_and_n_records:
@@ -287,10 +322,10 @@ class PklDataset(Dataset):
         self.classes = [int(item) for item in labels_set]
 
     def __getitem__(self, index: int) -> Tuple[Tensor, int, int]:
-        index+=self.index_offset
-        # offset = 0
-        # if index > self.max_idx:
-        #     offset = self.batch_offset
+        index += self.index_offset
+
+        if index > self.max_idx:
+            index += self.max_idx_offset
         # i_batch = offset + index // self.dataset_batch_size
         i_batch = index // self.dataset_batch_size
         offset = index % self.dataset_batch_size
