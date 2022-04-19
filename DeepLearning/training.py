@@ -76,6 +76,19 @@ class Trainer(abc.ABC):
         train_loss, train_acc, val_loss, val_acc = [], [], [], []
         best_acc = None
         best_loss = None
+
+        # Inferring
+        print("Performing accuracy check on pretrained model")
+        val_result = self.val_epoch(dl_val, verbose=True, **kw)
+        val_accuracy = val_result.accuracy
+        val_accuracy_top_k = val_result.accuracy_top_k
+        val_losses = val_result.losses
+        batch_val_loss = sum(val_losses) / len(val_losses)
+        print(
+            f"(Avg. Loss {batch_val_loss:.3f}, "
+            f"Accuracy {val_accuracy:.3f}, "
+            f"Accuracy Top K {val_accuracy_top_k:.3f})")
+
         for epoch in range(num_epochs):
             verbose = False  # pass this to train/test_epoch.
             if print_every > 0 and (
@@ -100,7 +113,8 @@ class Trainer(abc.ABC):
             val_loss.append(batch_val_loss)
 
             # Invoke scheduler at end of epoch
-            self.scheduler.step(batch_val_loss)
+            if self.scheduler is not None:
+                self.scheduler.step(batch_val_loss)
 
             # + operator is used to perform task of concatenation
             train_avg_losses = {'train_' + str(key): val for key, val in train_avg_losses.items()}

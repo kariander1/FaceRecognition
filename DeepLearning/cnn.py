@@ -19,17 +19,18 @@ class CNN(nn.Module):
     """
 
     def __init__(
-        self,
-        in_size,
-        out_classes: int,
-        channels: Sequence[int],
-        pool_every: int,
-        hidden_dims: Sequence[int],
-        conv_params: dict = {'kernel_size': 3, 'stride': 1, 'padding': 1},
-        activation_type: str = "relu",
-        activation_params: dict = {},
-        pooling_type: str = "max",
-        pooling_params: dict = {'kernel_size': 2},
+            self,
+            in_size,
+            out_classes: int,
+            channels: Sequence[int],
+            pool_every: int,
+            hidden_dims: Sequence[int],
+            conv_params: dict = {'kernel_size': 3, 'stride': 1, 'padding': 1},
+            activation_type: str = "relu",
+            activation_params: dict = {},
+            pooling_type: str = "max",
+            pooling_params: dict = {'kernel_size': 2},
+            is_identity: bool = False,
     ):
         """
         :param in_size: Size of input images, e.g. (C,H,W).
@@ -65,7 +66,10 @@ class CNN(nn.Module):
             raise ValueError("Unsupported activation or pooling type")
 
         self.feature_extractor = self._make_feature_extractor()
-        self.features_fc = self._make_mlp(in_size[0])
+        output_size = in_size[0]
+        if is_identity:
+            output_size = None
+        self.features_fc = self._make_mlp(output_size)
         self.label_classifier = self._make_mlp(self.out_classes,in_dim=in_size[0])
 
     def _make_feature_extractor(self):
@@ -125,9 +129,12 @@ class CNN(nn.Module):
 
     def _make_mlp(self, out_dim, in_dim=None):
         mlp: MLP = None
-
-        activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims) + ['none']
-        hidden_dims = self.hidden_dims + [out_dim]
+        activations = []
+        hidden_dims = self.hidden_dims.copy()
+        if out_dim is not None:
+            hidden_dims += [out_dim]
+            activations = [ACTIVATIONS[self.activation_type](**self.activation_params)] * len(self.hidden_dims) + [
+                'none']
         if in_dim is None:
             in_dim = self._n_features()
         mlp = MLP(in_dim=in_dim, dims=hidden_dims, nonlins=activations)
@@ -137,7 +144,7 @@ class CNN(nn.Module):
     def forward(self, x: Tensor):
 
         out: Tensor = None
-        x = torch.unsqueeze(torch.unsqueeze(x,2),3)
+        x = torch.unsqueeze(torch.unsqueeze(x, 2), 3)
         x = self.feature_extractor(x)
         x = torch.flatten(x, 1)
         x = self.features_fc(x)

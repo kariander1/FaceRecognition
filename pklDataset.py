@@ -151,8 +151,9 @@ def GetLabelVectors(label, index, lengths, full_dataset):
     return x1,x2
 
 
-def InterpolateDatasetRandom(dataset, full_dataset, min_interp_num=20, max_interp_num=30):
+def InterpolateDatasetRandom(dataset, full_dataset, min_interp_num=20, max_interp_num=30,interpolated_div = 2):
     set = copy.deepcopy(dataset)
+    set_interpolated_data = copy.deepcopy(dataset)
     index = GetStartingIndices(full_dataset)
     _,_,label_first = set[0]
     _, _, label_last = set[len(set)-1]
@@ -242,13 +243,20 @@ def InterpolateDatasetRandom(dataset, full_dataset, min_interp_num=20, max_inter
             # ds_features_r18[y % 2].append(X1)
             # ds_features_r50[y % 2].append(X2)
 
-    set.n_records = len(set) + interpolated_cnt
+    set.n_records = len(set) + (interpolated_cnt//interpolated_div)
     set.ds1.max_idx_offset = max_idx_offset
     set.ds2.max_idx_offset = max_idx_offset
     set.ds1.max_idx = max_idx
     set.ds2.max_idx = max_idx
+
+    set_interpolated_data.n_records = interpolated_cnt // interpolated_div
+    set_interpolated_data.ds1.max_idx_offset = len(full_dataset)
+    set_interpolated_data.ds2.max_idx_offset = len(full_dataset)
+    set_interpolated_data.ds1.max_idx = -1
+    set_interpolated_data.ds2.max_idx = -1
+
     print("n_records", str(set.n_records), "interpolated count", str(interpolated_cnt), "Max Idx", str(max_idx))
-    return set
+    return set,set_interpolated_data
 
 class PklEmbeddingsDataset(Dataset):
     """

@@ -110,8 +110,10 @@ def cnn_experiment(
         train_nn_space=None,
         val_nn_space=None,
         test_nn_space=None,
+        is_identity = False,
         # You can add extra configuration for your experiments here
         **kw,
+
 ):
     """
     Executes a single run of a Part3 experiment with a single configuration.
@@ -127,7 +129,7 @@ def cnn_experiment(
     if checkpoints:
         now = datetime.now()
 
-        checkpoints = checkpoints+'_'+now.strftime("%d_%m_%Y_%H_%M_%S")
+        #checkpoints = checkpoints+'_'+now.strftime("%d_%m_%Y_%H_%M_%S")
     cfg = locals()
 
     tf = torchvision.transforms.ToTensor()
@@ -162,7 +164,7 @@ def cnn_experiment(
 
     if model is None:
         model = model_cls(in_size=in_size, out_classes=len(ds_train.classes),
-                          channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,
+                          channels=channels, pool_every=pool_every, hidden_dims=hidden_dims,is_identity=is_identity,
                           **kw)
 
     # Writer will output to ./runs/ directory by default
@@ -174,13 +176,15 @@ def cnn_experiment(
 
     if optimizer is "identity":
         optimizer = None
+        scheduler = None
     elif optimizer is None:
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3,
+                                                         threshold=0.0001,
+                                                         threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08,
+                                                         verbose=True)
 
-    # TODO tweak scheduler parameters
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, threshold=0.0001,
-                                                     threshold_mode='rel', cooldown=0, min_lr=0, eps=1e-08,
-                                                     verbose=True)
+
 
     trainer = ClassifierTrainer(model, features_loss_fns, features_loss_weights, label_loss_fns, label_loss_weights,
                                 optimizer, scheduler, device, train_nn_space=train_nn_space,

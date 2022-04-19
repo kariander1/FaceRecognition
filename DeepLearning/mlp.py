@@ -45,8 +45,7 @@ class MLP(nn.Module):
             Length should match 'dims'.
         """
         assert len(nonlins) == len(dims)
-        self.in_dim = in_dim
-        self.out_dim = dims[-1]
+
 
         # TODO:
         #  - Initialize the layers according to the requested dimensions. Use
@@ -58,6 +57,11 @@ class MLP(nn.Module):
         super().__init__()
 
         layers = []
+        if len(nonlins) == 0:
+            self.fc_layers = nn.Sequential(*layers)
+            return
+        self.in_dim = in_dim
+        self.out_dim = dims[-1]
         mod_dims = [in_dim] + dims
         for i_layer in range(0, len(dims)):
 
