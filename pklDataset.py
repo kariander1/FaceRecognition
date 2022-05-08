@@ -201,7 +201,7 @@ def InterpolateDatasetRandom(dataset, full_dataset, min_interp_num=20, max_inter
             min_len = min([len(ds_features_list[0][0]), len(ds_features_list[0][1]),max_interp_num])
             max_len = max([len(ds_features_list[0][0]), len(ds_features_list[0][1])])
             if max_len<min_interp_num:
-                # TODO complete
+
                 break
             label_list += [current_label] * min_len
             current_label = current_label + 1
@@ -287,7 +287,7 @@ class PklEmbeddingsDataset(Dataset):
         """
         :return: Number of samples in this dataset.
         """
-        # ====== YOUR CODE: ======
+
         return self.n_records
         # ========================
 
@@ -375,7 +375,7 @@ class PklDataset(Dataset):
         """
         :return: Number of samples in this dataset.
         """
-        # ====== YOUR CODE: ======
+
         return self.n_records
         # ========================
 
@@ -401,10 +401,6 @@ class PklDataset(Dataset):
 #         :return: An iterator providing an infinite stream of random labelled images.
 #         """
 #
-#         # TODO:
-#         #  Yield tuples to produce an iterator over random images and labels.
-#         #  The iterator should produce an infinite stream of data.
-#         # ====== YOUR CODE: ======
 #         while True:
 #             # Generate infinite images as requested and yield each time
 #             yield random_labelled_image(self.image_dim, self.num_classes)

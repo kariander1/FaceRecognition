@@ -99,7 +99,7 @@ class CNN(nn.Module):
         # Make sure to not mess up the random state.
         rng_state = torch.get_rng_state()
         try:
-            # ====== YOUR CODE: ======
+
             in_channels, in_h, in_w, = tuple(self.in_size)
             # Conv params
             conv_kernel_size = self.conv_params['kernel_size']
@@ -194,20 +194,7 @@ class ResidualBlock(nn.Module):
 
         self.main_path, self.shortcut_path = None, None
 
-        # TODO: Implement a generic residual block.
-        #  Use the given arguments to create two nn.Sequentials:
-        #  - main_path, which should contain the convolution, dropout,
-        #    batchnorm, relu sequences (in this order).
-        #    Should end with a final conv as in the diagram.
-        #  - shortcut_path which should represent the skip-connection and
-        #    may contain a 1x1 conv.
-        #  Notes:
-        #  - Use convolutions which preserve the spatial extent of the input.
-        #  - Use bias in the main_path conv layers, and no bias in the skips.
-        #  - For simplicity of implementation, assume kernel sizes are odd.
-        #  - Don't create layers which you don't use! This will prevent
-        #    correct comparison in the test.
-        # ====== YOUR CODE: ======
+
         main_layers = []
         shortcut_layers = []
         act = ACTIVATIONS[activation_type](**activation_params)
@@ -228,14 +215,14 @@ class ResidualBlock(nn.Module):
 
         self.main_path = nn.Sequential(*main_layers)
         self.shortcut_path = nn.Sequential(*shortcut_layers)
-        # ========================
+
 
     def forward(self, x: Tensor):
-        # TODO: Implement the forward pass. Save the main and residual path to `out`.
+
         out: Tensor = None
-        # ====== YOUR CODE: ======
+
         out = self.main_path(x) + self.shortcut_path(x)
-        # ========================
+
         out = torch.relu(out)
         return out
 
@@ -270,13 +257,9 @@ class ResidualBottleneckBlock(ResidualBlock):
         assert len(inner_channels) > 0
         assert len(inner_channels) == len(inner_kernel_sizes)
 
-        # TODO:
-        #  Initialize the base class in the right way to produce the bottleneck block
-        #  architecture.
-        # ====== YOUR CODE: ======
         super().__init__(in_channels=in_out_channels, channels=[inner_channels[0]] + inner_channels + [in_out_channels],
                          kernel_sizes=[1] + inner_kernel_sizes + [1], **kwargs)
-        # ========================
+
 
 
 class ResNet(CNN):
@@ -308,19 +291,6 @@ class ResNet(CNN):
         in_channels, in_h, in_w, = tuple(self.in_size)
 
         layers = []
-        # TODO: Create the feature extractor part of the model:
-        #  [-> (CONV -> ACT)*P -> POOL]*(N/P)
-        #   \------- SKIP ------/
-        #  For the ResidualBlocks, use only dimension-preserving 3x3 convolutions.
-        #  Apply Pooling to reduce dimensions after every P convolutions.
-        #  Notes:
-        #  - If N is not divisible by P, then N mod P additional
-        #    CONV->ACT (with a skip over them) should exist at the end,
-        #    without a POOL after them.
-        #  - Use your own ResidualBlock implementation.
-        #  - Use bottleneck blocks if requested and if the number of input and output
-        #    channels match for each group of P convolutions.
-        # ====== YOUR CODE: ======
         default_kernel_size = 3
 
         p = self.pool_every
@@ -351,7 +321,6 @@ class ResNet(CNN):
             if i_channel+p <= n_channels:
                 layers += [pool]
 
-        # ========================
         seq = nn.Sequential(*layers)
         return seq
 
@@ -363,16 +332,6 @@ class YourCNN(CNN):
         """
         super().__init__(*args, **kwargs)
 
-        # TODO: Add any additional initialization as needed.
-        # ====== YOUR CODE: ======
-
-        # ========================
-
-    # TODO: Change whatever you want about the CNN to try to
-    #  improve it's results on CIFAR-10.
-    #  For example, add batchnorm, dropout, skip connections, change conv
-    #  filter sizes etc.
-    # ====== YOUR CODE: ======
     def _make_feature_extractor(self):
         in_channels, in_h, in_w, = tuple(self.in_size)
         layers = []
@@ -397,11 +356,10 @@ class YourCNN(CNN):
             if i_channel + p <= n_channels:
                 layers += [pool]
 
-        # ========================
+
         seq = nn.Sequential(*layers)
         return seq
 
-    # ========================
 
 
 class InceptionBlock(nn.Module):
@@ -484,7 +442,7 @@ class InceptionBlock(nn.Module):
 
     def forward(self, x: Tensor):
         out: Tensor = None
-        # ====== YOUR CODE: ======
+
         out = self.narrow_path(x) + self.wide_path(x) + self.pooling_path(x) + self.shortcut_path(x)
         # ========================
         out = torch.relu(out)

@@ -37,19 +37,6 @@ def mlp_experiment(
     dl_test: DataLoader,
     n_epochs: int,
 ):
-    # TODO:
-    #  - Create a BinaryClassifier model.
-    #  - Train using our ClassifierTrainer for n_epochs, while validating on the
-    #    validation set.
-    #  - Use the validation set for threshold selection.
-    #  - Set optimal threshold and evaluate one epoch on the test set.
-    #  - Return the model, the optimal threshold value, the accuracy on the validation
-    #    set (from the last epoch) and the accuracy on the test set (from a single
-    #    epoch).
-    #  Note: use print_every=0, verbose=False, plot=False where relevant to prevent
-    #  output from this function.
-    # ====== YOUR CODE: ======
-
     #  Create a BinaryClassifier model.
     model = BinaryClassifier(
         model=MLP(in_dim=2, dims=[*[width] * depth, 2], nonlins=[*['tanh'] * depth, 'none']),
@@ -224,7 +211,7 @@ def load_experiment(filename):
 
 
 def parse_cli():
-    p = argparse.ArgumentParser(description="CS236781 HW2 Experiments")
+    p = argparse.ArgumentParser(description="Experiments")
     sp = p.add_subparsers(help="Sub-commands")
 
     # Experiment config

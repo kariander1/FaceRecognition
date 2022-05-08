@@ -47,13 +47,6 @@ class MLP(nn.Module):
         assert len(nonlins) == len(dims)
 
 
-        # TODO:
-        #  - Initialize the layers according to the requested dimensions. Use
-        #    either nn.Linear layers or create W, b tensors per layer and wrap them
-        #    with nn.Parameter.
-        #  - Either instantiate the activations based on their name or use the provided
-        #    instances.
-        # ====== YOUR CODE: ======
         super().__init__()
 
         layers = []
@@ -81,13 +74,11 @@ class MLP(nn.Module):
         :param x: An input tensor, of shape (N, D) containing N samples with D features.
         :return: An output tensor of shape (N, D_out) where D_out is the output dim.
         """
-        # TODO: Implement the model's forward pass. Make sure the input and output
-        #  shapes are as expected.
-        # ====== YOUR CODE: ======
+
 
         # Flatten to 2D tensors
         x = torch.reshape(x, (x.shape[0], -1))
         y_pred = self.fc_layers(x)
 
         return  y_pred
-        # ========================
+
